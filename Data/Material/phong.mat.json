@@ -1,0 +1,6 @@
+{
+    "type": "phong",
+    "shaders": 
+        ["Data\\Shader\\phong.frag.spv", 
+        "Data\\Shader\\phong.vert.spv"]
+}

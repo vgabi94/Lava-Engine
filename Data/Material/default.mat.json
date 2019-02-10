@@ -1,0 +1,6 @@
+{
+    "type": "default",
+    "shaders": 
+        ["Data\\Shader\\default.frag.spv", 
+        "Data\\Shader\\default.vert.spv"]
+}

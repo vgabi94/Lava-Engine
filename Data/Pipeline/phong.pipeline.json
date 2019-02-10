@@ -1,0 +1,4 @@
+{
+    "vertexInput": "Vertex",
+    "shaders": ["phong.vert", "phong.frag"]
+}
