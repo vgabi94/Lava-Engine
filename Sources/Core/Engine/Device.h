@@ -10,6 +10,7 @@
 #define PRESENTATION_QUEUE Vulkan::g_Device.GetQueue(1)
 #define BUFFER_TRANSFER_QUEUE Vulkan::g_Device.GetQueue(2)
 #define TEXTURE_TRANSFER_QUEUE Vulkan::g_Device.GetQueue(3)
+#define LAYOUT_TRANSITION_QUEUE Vulkan::g_Device.GetQueue(4)
 
 #define g_vkDevice ((vk::Device)Vulkan::g_Device)
 #define g_vkPhysicalDevice ((vk::PhysicalDevice)Vulkan::g_Device.GetPhysicalDevice())
@@ -82,7 +83,7 @@ namespace Vulkan
         SwapChainSupportDetails mSCSD;
         StringList mDeviceExtensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
         
-        std::array<vk::Queue, 4> mQueue;
+        std::array<vk::Queue, 5> mQueue;
 
         SwapChainSupportDetails QuerySwapChainSupport(vk::PhysicalDevice, vk::SurfaceKHR);
         

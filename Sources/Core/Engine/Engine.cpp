@@ -116,11 +116,12 @@ namespace Engine
         g_Device.Init();
         g_BufferManager.Init();
         g_TextureManager.Init();
+		g_ResourceManager.Init();
         g_RenderpassManager.Init();
         g_Swapchain.Init();
+		g_RenderpassManager.PostSwapchainInit();
         g_ShaderManager.Init();
         g_PipelineManager.Init();
-        g_ResourceManager.Init();
     }
 
     void Engine::DestroyGraphics()

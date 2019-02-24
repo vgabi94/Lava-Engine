@@ -306,7 +306,7 @@ namespace Engine
         buffer.end();
 
         vk::SubmitInfo subInfo(0, nullptr, nullptr, 1, &buffer, 0, nullptr);
-        TEXTURE_TRANSFER_QUEUE.submit(1, &subInfo, fence);
+		LAYOUT_TRANSITION_QUEUE.submit(1, &subInfo, fence);
 
         LOG_INFO("[LOG] Image layout transition start \n");
 

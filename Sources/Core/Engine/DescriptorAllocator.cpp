@@ -28,7 +28,7 @@ namespace Engine
             vk::DescriptorSet descSet = *mFreeDescriptors.cbegin();
             mFreeDescriptors.erase(mFreeDescriptors.cbegin());
             mUsedDescriptors.insert(descSet);
-            LOG_INFO("Descriptor set reallocation successful!");
+            LOG_INFO("Descriptor set reallocation successful!\n");
             return descSet;
         }
         else
@@ -39,11 +39,11 @@ namespace Engine
             try
             {
                 descSet = g_vkDevice.allocateDescriptorSets(descSetAI)[0];
-                LOG_INFO("Descriptor set allocation successful!");
+                LOG_INFO("Descriptor set allocation successful!\n");
             }
             catch (vk::OutOfPoolMemoryError&)
             {
-                LOG_ERROR("Descriptor pool allocation failed!");
+                LOG_ERROR("Descriptor pool allocation failed!\n");
                 mPoolIndex = mDescriptorPool.size();
                 AllocateDescriptorPool();
                 descSet = AllocateDescriptorSet();
@@ -74,7 +74,7 @@ namespace Engine
             static_cast<uint32_t>(mPoolSizes.size()),
             mPoolSizes.data());
         mDescriptorPool.push_back(g_vkDevice.createDescriptorPool(descriptorPoolCI));
-        LOG_INFO("Descriptor pool allocation successful!");
+        LOG_INFO("Descriptor pool allocation successful!\n");
     }
 }
 

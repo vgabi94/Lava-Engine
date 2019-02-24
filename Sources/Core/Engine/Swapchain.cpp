@@ -64,8 +64,8 @@ namespace Vulkan
     void Swapchain::Init()
     {
         _Init();
-        mFramePass = reinterpret_cast<Engine::FramePass*>
-            (GRenderpassManager.AddPass<Engine::FramePass>());
+		GRenderpassManager.InitPasses();
+		mFramePass = GRenderpassManager.GetPassAt<Engine::FramePass>(PassIndex::FRAME);
         LOG_INFO("[LOG] Swapchain init\n");
     }
 
@@ -80,7 +80,7 @@ namespace Vulkan
 
     void Swapchain::Update()
     {
-        assert(g_CurrentWorld != nullptr);
+        THROW_IF(g_CurrentWorld == nullptr, "Current world cannot be null!");
 //#ifdef _DEBUG
 //        // Must wait for queue when validation layers are enabled
 //        // otherwise the memory will grow very rapidly
@@ -98,10 +98,11 @@ namespace Vulkan
             return;
         }
 
-        mFramePass->Wait();
-        mFramePass->Setup();
-        mFramePass->CreateSubmitInfo(mImageAvailableSem, mRenderFinishedSem);
-        mFramePass->Render();
+		GDevice.WaitForFence(GRenderpassManager.GetFenceAt(mCurrentImageIndex));
+		GDevice.ResetFence(GRenderpassManager.GetFenceAt(mCurrentImageIndex));
+		
+		GRenderpassManager.SetupPasses();
+		GRenderpassManager.RenderPasses(mImageAvailableSem, vk::PipelineStageFlagBits::eColorAttachmentOutput, mRenderFinishedSem);
 
         mPreviousImageIndex = mCurrentImageIndex;
 

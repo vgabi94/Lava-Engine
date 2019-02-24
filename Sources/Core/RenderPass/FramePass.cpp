@@ -5,6 +5,7 @@
 #include <Manager\WorldManager.h>
 #include <Manager\TextureManager.h>
 #include <Manager\BufferManager.h>
+#include <Manager\ResourceManager.h>
 
 namespace Engine
 {
@@ -12,17 +13,18 @@ namespace Engine
 
     void FramePass::Init()
     {
-        CreateDepthResources();
+		RenderPass::Init();
+		mPipelineStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
         CreateRenderPass();
         CreateFramebuffers();
         CreateCommandPoolAndBuffer();
-        CreateFences();
 
         LOG_INFO("[LOG] FramePass init {0:#x}\n", (uint64_t)this);
     }
 
     void FramePass::Destroy()
     {
+		RenderPass::Destroy();
         _Destroy();
         LOG_INFO("[LOG] FramePass destroy {0:#x}\n", (uint64_t)this);
         mAllocator.deleteElement(this);
@@ -30,7 +32,9 @@ namespace Engine
 
     void FramePass::Recreate()
     {
+		g_ResourceManager.DestroyDepthBuffer();
         _Destroy();
+		g_ResourceManager.CreateDepthBuffer();
         Init();
         LOG_INFO("[LOG] FramePass recreate {0:#x}\n", (uint64_t)this);
     }
@@ -41,45 +45,31 @@ namespace Engine
         RecordCommandBuffer(GSwapchain.GetCurrentFrameIndex());
     }
 
-    void FramePass::Render()
+	vk::SubmitInfo FramePass::GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStage, vk::Semaphore& signalSem)
     {
-        GRAPHICS_QUEUE.submit({ mSubmitInfo }, mFence[GSwapchain.GetCurrentFrameIndex()]);
-    }
-
-    void FramePass::Wait()
-    {
-        uint32_t frameIndex = GSwapchain.GetCurrentFrameIndex();
-        GDevice.WaitForFence(mFence[frameIndex]);
-        GDevice.ResetFence(mFence[frameIndex]);
-    }
-
-    void FramePass::CreateSubmitInfo(vk::Semaphore & imageSem, vk::Semaphore & renderSem)
-    {
-        mWaitStages = { vk::PipelineStageFlagBits::eColorAttachmentOutput };
+        mWaitStages = { waitStage };
         vk::SubmitInfo submitInfo(
-            1, &imageSem,
+            1, &waitSem,
             mWaitStages.data(),
             1, &mCommandBuffer[GSwapchain.GetCurrentFrameIndex()],
-            1, &renderSem
+            1, &signalSem
         );
-        mSubmitInfo = submitInfo;
+        return submitInfo;
     }
 
     void FramePass::_Destroy()
     {
-        GDevice.WaitForFence(mFence[0]);
-        GDevice.WaitForFence(mFence[1]);
+        GDevice.WaitForFence(g_RenderpassManager.GetFenceAt(0));
+        GDevice.WaitForFence(g_RenderpassManager.GetFenceAt(1));
         DestroyRenderPass();
         DestroyCommandPool();
         DestroyFramebuffers();
-        DestroyDepthResources();
-        DestroyFences();
     }
 
     void FramePass::CreateRenderPass()
     {
         vk::AttachmentDescription depthAttachment({},
-            mDepthFormat,
+            g_ResourceManager.GetDepthFormat(),
             vk::SampleCountFlagBits::e1,
             vk::AttachmentLoadOp::eClear,
             vk::AttachmentStoreOp::eDontCare,
@@ -125,41 +115,13 @@ namespace Engine
         mRenderPass = g_vkDevice.createRenderPass(renderPassInfo);
     }
 
-    void FramePass::CreateDepthResources()
-    {
-        vk::Extent3D extent = { GSwapchain.GetExtent().width, GSwapchain.GetExtent().height, 1 };
-        mDepthFormat = vk::Format::eD32Sfloat;
-        
-        mDepthImage = g_TextureManager.CreateImage2D(extent,
-            vk::ImageUsageFlagBits::eDepthStencilAttachment,
-            VMA_MEMORY_USAGE_GPU_ONLY, 0, mDepthAlloc, nullptr, mDepthFormat);
-
-        mDepthImageView = g_TextureManager.CreateImageView2D(mDepthImage,
-            mDepthFormat, vk::ImageAspectFlagBits::eDepth);
-
-        g_TextureManager.TransitionImageLayout(mDepthImage, mDepthFormat,
-            vk::ImageLayout::eUndefined, vk::ImageLayout::eDepthStencilAttachmentOptimal);
-    }
-
-    void FramePass::CreateFences()
-    {
-        uint32_t size = GSwapchain.GetImageCount();
-        mFence.resize(size);
-        vk::FenceCreateInfo fenceInfo(vk::FenceCreateFlagBits::eSignaled);
-
-        for (size_t i = 0; i < size; i++)
-        {
-            mFence[i] = g_vkDevice.createFence(fenceInfo);
-        }
-    }
-
     void FramePass::CreateFramebuffers()
     {
         mFramebuffer.resize(GSwapchain.GetImageCount());
 
         for (size_t i = 0; i < mFramebuffer.size(); i++)
         {
-            vk::ImageView imageViews[] = { GSwapchain.GetImageViewAt(i), mDepthImageView };
+            vk::ImageView imageViews[] = { GSwapchain.GetImageViewAt(i), g_ResourceManager.GetDepthImageView() };
 
             vk::FramebufferCreateInfo info({},
                 mRenderPass,
@@ -227,20 +189,6 @@ namespace Engine
     void FramePass::DestroyCommandPool()
     {
         g_vkDevice.destroyCommandPool(mCommandPool);
-    }
-
-    void FramePass::DestroyDepthResources()
-    {
-        g_vkDevice.destroyImageView(mDepthImageView);
-        vmaDestroyImage(GVmaAllocator, mDepthImage, mDepthAlloc);
-    }
-
-    void FramePass::DestroyFences()
-    {
-        for (auto& f : mFence)
-        {
-            g_vkDevice.destroyFence(f);
-        }
     }
 
     void FramePass::DestroyFramebuffers()

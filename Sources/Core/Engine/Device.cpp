@@ -89,20 +89,20 @@ namespace Vulkan
 
         if (GRAPHICS_FAMILY_INDEX == PRESENTATION_FAMILY_INDEX)
         {
-            float queuePriorities[] = { 1.f, 1.f, 1.f };
+            float queuePriorities[] = { 1.f, 1.f, 1.f, 1.f };
 
             uint32_t uniqueQueueFamilies = mQueueFamilyIndex.Graphics;
-            uint32_t queueCount = 3;
+            uint32_t queueCount = 4;
 
             vk::DeviceQueueCreateInfo qinfo({}, uniqueQueueFamilies, queueCount, queuePriorities);
             queueInfo.push_back(qinfo);
         }
         else
         {
-            float queuePriorities[] = { 1.f, 1.f, 1.f };
+            float queuePriorities[] = { 1.f, 1.f, 1.f, 1.f };
 
             uint32_t uniqueQueueFamilies[] = { mQueueFamilyIndex.Graphics, mQueueFamilyIndex.Presentation };
-            uint32_t queueCount[] = { 3, 1 };
+            uint32_t queueCount[] = { 4, 1 };
 
             vk::DeviceQueueCreateInfo qinfo({}, uniqueQueueFamilies[0], queueCount[0], queuePriorities);
             queueInfo.push_back(qinfo);
@@ -141,6 +141,7 @@ namespace Vulkan
             mDevice.getQueue(mQueueFamilyIndex.Presentation, 0),
             mDevice.getQueue(mQueueFamilyIndex.Graphics, 1),
             mDevice.getQueue(mQueueFamilyIndex.Graphics, 2),
+            mDevice.getQueue(mQueueFamilyIndex.Graphics, 3),
         };
     }
 
