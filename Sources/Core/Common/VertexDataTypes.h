@@ -24,7 +24,7 @@ namespace Engine
         {
             return std::array<vk::VertexInputAttributeDescription, 2>
             {
-                vk::VertexInputAttributeDescription(0, binding, vk::Format::eR32G32Sfloat, offsetof(Vertex2D, position)),
+                vk::VertexInputAttributeDescription(0, binding, vk::Format::eR32G32B32Sfloat, offsetof(Vertex2D, position)),
                     vk::VertexInputAttributeDescription(1, binding, vk::Format::eR32G32Sfloat, offsetof(Vertex2D, texcoord))
             };
         }
@@ -88,7 +88,33 @@ namespace Engine
         }
     };
 
+	struct VertexPos
+	{
+		Vector3 position;
+
+		VertexPos(float x, float y, float z) : position(x, y, z) { }
+
+		static vk::VertexInputBindingDescription GetBindingDescription(uint32_t binding = 0,
+			vk::VertexInputRate inputRate = vk::VertexInputRate::eVertex)
+		{
+			return vk::VertexInputBindingDescription(
+				binding,
+				sizeof(VertexPos),
+				inputRate
+			);
+		}
+
+		static std::array<vk::VertexInputAttributeDescription, 1> GetAttributeDescriptions(uint32_t binding = 0)
+		{
+			return std::array<vk::VertexInputAttributeDescription, 1>
+			{
+				vk::VertexInputAttributeDescription(0, binding, vk::Format::eR32G32B32Sfloat, offsetof(VertexPos, position))
+			};
+		}
+	};
+
     typedef std::vector<Vertex> VertexList;
+    typedef std::vector<VertexPos> VertexPosList;
     typedef std::vector<Vertex2D> Vertex2DList;
     typedef std::vector<VertexExt> VertexExtList;
     typedef std::vector<uint32_t> IndexList;

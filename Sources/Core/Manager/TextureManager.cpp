@@ -181,6 +181,51 @@ namespace Engine
         return image;
     }
 
+	vk::Image TextureManager::CreateCubeMap(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+		VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+		VmaAllocation & vmaAllocation, VmaAllocationInfo * vmaAllocationInfo,
+		vk::Format format)
+	{
+		VkImage rawImage;
+		vk::Image image;
+
+		vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlagBits::eCubeCompatible,
+			vk::ImageType::e2D,
+			format, extent, 1, 6,
+			vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, imageUsageFlags,
+			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
+
+		VmaAllocationCreateInfo allocCreateInfo = {};
+		allocCreateInfo.flags = vmaAllocationFlags;
+		allocCreateInfo.usage = vmaMemoryUsage;
+
+		assert(
+			vmaCreateImage(
+				GVmaAllocator,
+				&(VkImageCreateInfo)imageCreateInfo,
+				&allocCreateInfo,
+				&rawImage,
+				&vmaAllocation,
+				vmaAllocationInfo) == VK_SUCCESS
+		);
+
+		image = rawImage;
+		return image;
+	}
+
+	vk::ImageView TextureManager::CreateCubeMapView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags)
+	{
+		vk::ImageViewCreateInfo imageViewCI({},
+			image,
+			vk::ImageViewType::eCube,
+			format,
+			{},
+			vk::ImageSubresourceRange(aspectFlags, 0, 1, 0, 6)
+		);
+
+		return g_vkDevice.createImageView(imageViewCI);
+	}
+
     uint32_t TextureManager::LoadTex2D(const char * path)
     {
         Texture tex;
@@ -374,6 +419,23 @@ namespace Engine
 
         return g_vkDevice.createSampler(samplerCI);
     }
+	
+	vk::Sampler TextureManager::CreateSamplerCube()
+	{
+		vk::SamplerCreateInfo samplerCI({},
+			vk::Filter::eLinear,
+			vk::Filter::eLinear,
+			{},
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			0.0f, VK_TRUE, 16, VK_FALSE,
+			vk::CompareOp::eAlways, 0.0f, 0.0f,
+			vk::BorderColor::eFloatOpaqueWhite
+		);
+
+		return g_vkDevice.createSampler(samplerCI);
+	}
 }
 
 /* EXPORTED INTERFACE */

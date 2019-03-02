@@ -33,6 +33,15 @@ namespace Engine
             VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
             VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo,
             vk::Format format = vk::Format::eR8G8B8A8Unorm);
+
+		vk::Image CreateCubeMap(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+			VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm);
+
+		vk::ImageView CreateCubeMapView(vk::Image image,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
         
         vk::ImageView CreateImageView2D(vk::Image image,
             vk::Format format = vk::Format::eR8G8B8A8Unorm,
@@ -49,6 +58,8 @@ namespace Engine
         uint32_t CreateTextureFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
         
         vk::Sampler CreateSampler();
+
+		vk::Sampler CreateSamplerCube();
 
         const Texture& GetTexture(uint32_t index) const
         {
