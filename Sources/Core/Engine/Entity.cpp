@@ -2,6 +2,7 @@
 #include <Manager\BufferManager.h>
 #include <Manager\PipelineManager.h>
 #include <Engine\World.h>
+#include <Common\PushConstantsStructs.h>
 
 namespace Engine
 {
@@ -21,14 +22,14 @@ namespace Engine
         vk::Pipeline pipeline = pipe.mPipeline;
         cmdBuff.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-        PushConstants pc;
+        DefaultPS pc;
         pc.MVP = mMVP;
         pc.model = mModel;
         pc.eyePos = mWorld->mCameraPos;
 
         cmdBuff.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment,
-            0, sizeof(PushConstants), &pc);
+            0, sizeof(DefaultPS), &pc);
 
         mMaterial->Bind(cmdBuff);
 

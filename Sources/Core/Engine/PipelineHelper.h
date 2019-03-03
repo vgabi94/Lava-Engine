@@ -1,61 +1,5 @@
 #pragma once
 
-//#define VERTEX_INPUT_CREATE_INFO(Type) auto bindingDescription = Type::GetBindingDescription(); \
-//auto attributeDescriptions = Type::GetAttributeDescriptions();                      \
-//vk::PipelineVertexInputStateCreateInfo vertexInputCreateInfo({},                    \
-//    1,                                                                              \
-//    &bindingDescription,                                                            \
-//    static_cast<uint32_t>(attributeDescriptions.size()),                            \
-//    attributeDescriptions.data())
-
-
-//#define INPUT_ASSEMBLY_CREATE_INFO(Type) vk::PipelineInputAssemblyStateCreateInfo inputAssemblyCreateInfo({}, \
-//vk::PrimitiveTopology::e##Type, VK_FALSE)
-//
-//
-//#define DYNAMIC_VIEWPORT_AND_SCISSORS vk::PipelineViewportStateCreateInfo viewportState({}, 1, nullptr, 1, nullptr);    \
-//vk::DynamicState dynamicStates[] = { vk::DynamicState::eViewport, vk::DynamicState::eScissor };                         \
-//vk::PipelineDynamicStateCreateInfo dynamicStateCreateInfo({}, 2, dynamicStates)                                         \
-//
-//
-//#define RASTERIZER(FillType, CullMode, WindingOrder) vk::PipelineRasterizationStateCreateInfo rasterizer({},  \
-//VK_FALSE,                                                                   \
-//VK_FALSE,                                                                   \
-//vk::PolygonMode::e##FillType,                                               \
-//vk::CullModeFlagBits::e##CullMode,                                          \
-//vk::FrontFace::e##WindingOrder,                                             \
-//VK_FALSE,                                                                   \
-//0.f, 0.f, 0.f, 1.f)
-//
-//
-//#define MULTISAMPLING_NONE vk::PipelineMultisampleStateCreateInfo multisampling({}, \
-//vk::SampleCountFlagBits::e1,                                                        \
-//VK_FALSE,                                                                           \
-//1.f,                                                                                \
-//nullptr,                                                                            \
-//VK_FALSE,                                                                           \
-//VK_FALSE)
-//
-//
-//#define BLENDING_DISABLE vk::PipelineColorBlendAttachmentState colorBlendAttachment(VK_FALSE,       \
-//vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd,                                   \
-//vk::BlendFactor::eOne, vk::BlendFactor::eZero, vk::BlendOp::eAdd,                                   \
-//vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB    \
-//| vk::ColorComponentFlagBits::eA);                                                                  \
-//vk::PipelineColorBlendStateCreateInfo colorBlending({},                                             \
-//    VK_FALSE,                                                                                       \
-//    vk::LogicOp::eCopy,                                                                             \
-//    1, &colorBlendAttachment);
-//
-//
-//#define DEPTH_ENABLE vk::PipelineDepthStencilStateCreateInfo depthStencil({}, \
-//    VK_TRUE, \
-//    VK_TRUE, \
-//    vk::CompareOp::eLess, \
-//    VK_FALSE, \
-//    VK_FALSE \
-//)
-
 #define VERTEX_INPUT_CREATE_INFO(Type) auto bindingDescription = Type::GetBindingDescription();\
 auto attributeDescriptions = Type::GetAttributeDescriptions();\
 temp.mVertexInputBindingDesc = bindingDescription;\
@@ -87,7 +31,7 @@ namespace Engine
         return false;
     }
 
-    vk::DescriptorType GetDescriptorType(const std::string& type, const std::string& attr)
+    static vk::DescriptorType GetDescriptorType(const std::string& type, const std::string& attr)
     {
         if (attr == "UNIFORM" || attr == "UNIFORM0") // TODO error in this funciton
         {
@@ -126,9 +70,31 @@ namespace Engine
         }
     }
 
+	static vk::CompareOp GetCompareOp(const std::string& op)
+	{
+		if (op == "never")
+			return vk::CompareOp::eNever;
+		if (op == "less")
+			return vk::CompareOp::eLess;
+		if (op == "equal")
+			return vk::CompareOp::eEqual;
+		if (op == "lequal")
+			return vk::CompareOp::eLessOrEqual;
+		if (op == "greater")
+			return vk::CompareOp::eGreater;
+		if (op == "notequal")
+			return vk::CompareOp::eNotEqual;
+		if (op == "gequal")
+			return vk::CompareOp::eGreaterOrEqual;
+		if (op == "always")
+			return vk::CompareOp::eAlways;
+		
+		return vk::CompareOp::eNever;
+	}
+
     static bool IsValidVertexType(const std::string& type)
     {
-        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt")
+        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt" || type == "VertexPos")
             return true;
         return false;
     }
@@ -181,6 +147,10 @@ namespace Engine
         {
             VERTEX_INPUT_CREATE_INFO(VertexExt);
         }
+		else if (type == "VertexPos")
+		{
+			VERTEX_INPUT_CREATE_INFO(VertexPos);
+		}
     }
 
     static void GetInputAssemblyCI(std::string type, GraphicsPipelineCI& temp)

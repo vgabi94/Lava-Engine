@@ -231,7 +231,7 @@ namespace Engine
         Texture tex;
         tex.mDepth = 1;
         stbi_uc* pixels = stbi_load(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb_alpha);
-        vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * 4;
+        vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * tex.mChannels;
         assert(pixels);
         
         VmaAllocation stagAllocation;
@@ -280,6 +280,47 @@ namespace Engine
 
         return g_vkDevice.createImageView(imageViewCI);
     }
+
+	uint32_t TextureManager::LoadTexHDR(const char* path)
+	{
+		Texture tex;
+		tex.mDepth = 1;
+		float* pixels = stbi_loadf(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb);
+		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * tex.mChannels * sizeof(float);
+		assert(pixels);
+
+		VmaAllocation stagAllocation;
+		VmaAllocationInfo stagAllocInfo;
+		vk::Buffer stagBuffer;
+
+		stagBuffer = g_BufferManager.CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc,
+			VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, stagAllocation, &stagAllocInfo);
+
+		memcpy(stagAllocInfo.pMappedData, pixels, static_cast<size_t>(imageSize));
+		stbi_image_free(pixels);
+
+		VmaAllocation imageAllocation;
+
+		vk::Extent3D extent((uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth);
+		tex.mImage = CreateImage2D(extent,
+			vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+			VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr);
+
+		tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR16G16B16A16Snorm);
+		tex.mSampler = CreateHDRSampler();
+
+		uint32_t index = mTexture.size();
+		mTexture.push_back(tex);
+		mImageAllocation.push_back(imageAllocation);
+
+		UploadRequest req;
+		req.imageIndex = index;
+		req.stagBuffer = stagBuffer;
+		req.stagAllocation = stagAllocation;
+		mUploadRequest.push_back(req);
+
+		return index;
+	}
 
     void TextureManager::TransitionImageLayout(vk::Image image, vk::Format format,
         vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
@@ -436,11 +477,32 @@ namespace Engine
 
 		return g_vkDevice.createSampler(samplerCI);
 	}
+
+	vk::Sampler TextureManager::CreateHDRSampler()
+	{
+		vk::SamplerCreateInfo samplerCI({},
+			vk::Filter::eLinear,
+			vk::Filter::eLinear,
+			{},
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			0.0f, VK_TRUE, 16, VK_FALSE,
+			vk::CompareOp::eAlways, 0.0f, 0.0f
+		);
+
+		return g_vkDevice.createSampler(samplerCI);
+	}
 }
 
 /* EXPORTED INTERFACE */
 extern "C"
 {
+	LAVA_API uint32_t LoadHDR(const char* path)
+	{
+		return Engine::g_TextureManager.LoadTexHDR(path);
+	}
+
     LAVA_API uint32_t Load2D(const char* path)
     {
         return Engine::g_TextureManager.LoadTex2D(path);

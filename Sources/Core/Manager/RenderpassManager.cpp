@@ -1,26 +1,26 @@
 #include "RenderpassManager.h"
 #include <Engine\Swapchain.h>
 #include <Engine\Device.h>
+#include <RenderPass\SkyPass.h>
 
 namespace Engine
 {
 	RenderpassManager g_RenderpassManager;
 
-	void RenderPass::Init()
-	{
-		mSemaphore = GDevice.CreateSemaphore();
-	}
-
-	void RenderPass::Destroy()
-	{
-		g_vkDevice.destroySemaphore(mSemaphore);
-	}
-
     void RenderpassManager::Init()
     {
         mPass.reserve(RENDERPASS_CAPACITY);
+		mPassMap.reserve(RENDERPASS_CAPACITY);
         LOG_INFO("[LOG] RenderpassManager init\n");
     }
+
+	void RenderpassManager::PostShaderLoadInit()
+	{
+		for (auto pass : mPass)
+		{
+			pass->PostShaderLoadInit();
+		}
+	}
 
 	void RenderpassManager::PostSwapchainInit()
 	{
@@ -40,7 +40,8 @@ namespace Engine
 	
 	void RenderpassManager::InitPasses()
 	{
-		AddPass<Engine::FramePass>();
+		AddPass<Engine::FramePass>(RPConst::FRAME);
+		AddPass<Engine::SkyPass>(RPConst::SKY);
 		LOG_INFO("[LOG] Render passes init\n");
 	}
 

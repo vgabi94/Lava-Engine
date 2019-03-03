@@ -50,16 +50,21 @@ namespace Engine
         void TransitionImageLayout(vk::Image image, vk::Format format,
             vk::ImageLayout initialLayout, vk::ImageLayout finalLayout);
 
+		// ---- Loading functions ---- //
         uint32_t LoadTex2D(const char* path);
+		uint32_t LoadTexHDR(const char* path);
+		// --------------------------- //
         
         /// <summary>
         /// Creates a 1x1 texture given the color rgba
         /// </summary>
         uint32_t CreateTextureFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
         
+		// ---- Samplers ---- //
         vk::Sampler CreateSampler();
-
 		vk::Sampler CreateSamplerCube();
+		vk::Sampler CreateHDRSampler();
+		// ------------------ //
 
         const Texture& GetTexture(uint32_t index) const
         {

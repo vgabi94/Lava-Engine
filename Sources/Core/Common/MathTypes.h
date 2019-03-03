@@ -36,11 +36,4 @@ namespace Engine
         Vector4 row1, row2, row3, row4;
         Matrix4() : row1(), row2(), row3(), row4() { };
     };
-
-    struct PushConstants
-    {
-        Matrix4 MVP;
-        Matrix4 model;
-        Vector3 eyePos;
-    };
 }

@@ -10,6 +10,7 @@
 #include <Manager\TextureManager.h>
 #include <Manager\RenderpassManager.h>
 #include <Manager\ResourceManager.h>
+#include <Manager\MaterialManager.h>
 
 #define EngineGlobals Engine::g_EngineSettings
 
@@ -30,6 +31,7 @@ namespace Engine
     {
         // The pipelines have to be created after the shader modules are loaded
         // This function is called from .NET runtime
+		g_RenderpassManager.PostShaderLoadInit();
         g_WorldManager.Init();
     }
     
@@ -122,11 +124,13 @@ namespace Engine
 		g_RenderpassManager.PostSwapchainInit();
         g_ShaderManager.Init();
         g_PipelineManager.Init();
+		g_MaterialManager.Init();
     }
 
     void Engine::DestroyGraphics()
     {
         using namespace Vulkan;
+		g_MaterialManager.Destroy();
         g_ResourceManager.Destroy();
         g_TextureManager.Destroy();
         g_PipelineManager.Destroy();

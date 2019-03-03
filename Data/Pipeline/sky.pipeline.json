@@ -1,0 +1,7 @@
+{
+    "vertexInput": "VertexPos",
+    "cullMode" : "Front",
+    "shaders": ["sky.vert", "sky.frag"],
+    "depthCompareOp" : "lequal",
+    "renderPass" : "skyPass"
+}

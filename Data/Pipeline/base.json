@@ -30,7 +30,7 @@
     "logicOp" : 3,
     "depthTestEnable" : true,
     "depthWriteEnable" : true,
-    "depthCompareOp" : 1,
+    "depthCompareOp" : "less",
     "stencilTestEnable" : false,
     "depthBoundsTestEnable" : false,
     "shaders": [],

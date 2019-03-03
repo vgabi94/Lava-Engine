@@ -159,12 +159,16 @@ namespace Engine
             vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
         mCommandBuffer[imageIndex].begin(beginInfo);
 
+		float r, g, b;
+		CurrentWorld->mSkySettings.GetClearColor(r, g, b);
+
         vk::ClearValue clearValues[] =
         {
-            vk::ClearColorValue(std::array<float, 4>{0.f, 0.f, 0.f, 1.f}),
+            vk::ClearColorValue(std::array<float, 4>{r, g, b, 1.f}),
             vk::ClearDepthStencilValue(1.0f, 0.0f)
         };
-        vk::RenderPassBeginInfo renderPassInfo(
+        
+		vk::RenderPassBeginInfo renderPassInfo(
             mRenderPass,
             mFramebuffer[imageIndex],
             vk::Rect2D({ 0, 0 }, GSwapchain.GetExtent()),

@@ -65,7 +65,7 @@ namespace Vulkan
     {
         _Init();
 		GRenderpassManager.InitPasses();
-		mFramePass = GRenderpassManager.GetPassAt<Engine::FramePass>(PassIndex::FRAME);
+		mFramePass = GRenderpassManager.GetPass<Engine::FramePass>(RP::FRAME);
         LOG_INFO("[LOG] Swapchain init\n");
     }
 

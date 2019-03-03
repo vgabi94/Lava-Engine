@@ -1,0 +1,6 @@
+{
+    "type": "sky",
+    "shaders": 
+        ["Data\\Shader\\sky.frag.spv", 
+        "Data\\Shader\\sky.vert.spv"]
+}

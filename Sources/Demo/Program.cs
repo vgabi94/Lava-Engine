@@ -46,6 +46,9 @@ namespace Demo
             //uint[] i = new uint[3] { 0, 1, 2 };
 
             //uint tex = Texture.Load2D(Settings.TextureDirPath + "\\texture.jpg");
+            uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky.hdr");
+            uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv.hdr");
+
             uint tex = Texture.FromColor(Color.FromHex("#7FFF00"));
             StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
             StaticMesh mesh2 = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
@@ -76,6 +79,7 @@ namespace Demo
             camera.FarPlane = 50f;
 
             World world = WorldManager.CreateWorld();
+            world.skySettings.SetColor(Color.GRAY);
 
             var phys = world.PhysicsWorld;
             //phys.Gravity = new Vector3(0f, -2f, 0f);

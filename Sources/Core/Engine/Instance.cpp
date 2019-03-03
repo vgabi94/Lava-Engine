@@ -146,8 +146,10 @@ namespace Vulkan
 #ifdef _DEBUG
     bool Instance::PopulateValidationLayers()
     {
-        uint32_t layerCount;
 		std::vector<vk::LayerProperties> availableLayers = vk::enumerateInstanceLayerProperties();
+
+		StringList foundValidationLayers;
+		foundValidationLayers.reserve(mValidationLayers.size());
 
         mValidationLayers = 
         {
@@ -168,9 +170,17 @@ namespace Vulkan
                 }
             }
 
-            if (!layerFound)
-                return false;
+			if (!layerFound)
+			{
+				LOG_INFO("Could not enable {0} layer!\n", layerName);
+			}
+			else
+			{
+				foundValidationLayers.push_back(layerName);
+			}
         }
+
+		mValidationLayers = foundValidationLayers;
 
         return true;
     }

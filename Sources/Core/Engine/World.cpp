@@ -159,6 +159,11 @@ extern "C"
         world->mCameraPos = camPos;
     }
 
+	LAVA_API void SetSkySettings_Native(Engine::World* world, Engine::SkySettings skySettings)
+	{
+		world->mSkySettings = skySettings;
+	}
+
     LAVA_API void SetViewBounds_Native(Engine::World* world, Engine::Vector3 bmin, Engine::Vector3 bmax)
     {
         world->mViewBoundingMin = bmin;

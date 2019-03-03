@@ -1,6 +1,6 @@
 #include "Pipeline.h"
 #include "Swapchain.h"
-#include <Common\MathTypes.h>
+#include <Common\PushConstantsStructs.h>
 #include <Common\VertexDataTypes.h>
 #include <Manager\ShaderManager.h>
 #include <Manager\ResourceManager.h>
@@ -265,9 +265,7 @@ namespace Engine
         }
         if (HAS_PROPERTY("depthCompareOp"))
         {
-            temp.mDepthStencil.depthCompareOp = static_cast<vk::CompareOp>(j["depthCompareOp"]);
-            // TODO serialize CompareOp enum
-            // https://github.com/nlohmann/json
+            temp.mDepthStencil.depthCompareOp = GetCompareOp(j["depthCompareOp"]);
         }
         if (HAS_PROPERTY("stencilTestEnable"))
         {
@@ -287,14 +285,7 @@ namespace Engine
         if (HAS_PROPERTY("renderPass"))
         {
             std::string renderPass = j["renderPass"];
-            if (renderPass == "framePass")
-            {
-                temp.mRenderPass = GSwapchain.GetFramePass()->GetVkObject();
-            }
-            else
-            {
-                LOG_ERROR("Pipeline error: Invalid render pass {}!", renderPass.c_str());
-            }
+			temp.mRenderPass = g_RenderpassManager.GetPass(renderPass)->GetVkObject();
         }
     }
  
@@ -389,7 +380,13 @@ namespace Engine
         mDescAllocator.Init(poolSizes, mDescriptorSetLayout);
         
         vk::PushConstantRange pushConstantRange(vk::ShaderStageFlagBits::eVertex
-            | vk::ShaderStageFlagBits::eFragment, 0, sizeof(PushConstants));
+            | vk::ShaderStageFlagBits::eFragment, 0, sizeof(DefaultPS));
+
+		// ADD custom push constants here!
+		if (shaderNames[0].find("sky") != std::string::npos)
+		{
+			pushConstantRange.size = sizeof(SkyPS);
+		}
 
         // Add all descriptor layout sets used by this pipeline
         std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;

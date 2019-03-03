@@ -1,42 +1,21 @@
 #pragma once
 
-#include <vulkan\vulkan.hpp>
+#include <Common\Constants.h>
+#include <RenderPass\RenderPass.h>
+#include <string>
+#include <unordered_map>
 
 #define GRenderpassManager Engine::g_RenderpassManager
-#define PassIndex Engine::RenderPassIndex
+#define RP Engine::RPConst
 
 namespace Engine
 {
-	namespace RenderPassIndex
+	// Render pass constant names
+	namespace RPConst
 	{
-		static constexpr uint32_t FRAME = 0;
+		static constexpr const char* FRAME = "framePass";
+		static constexpr const char* SKY = "skyPass";
 	}
-
-    class RenderPass
-    {
-    public:
-		virtual void Init();
-		virtual void Destroy();
-
-        virtual void Recreate() {};
-
-        virtual void Setup() {}
-		virtual vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages, vk::Semaphore& signalSem) = 0;
-
-        vk::RenderPass GetVkObject() const { return mRenderPass; }
-        vk::Framebuffer FramebufferAt(uint32_t index) const { return mFramebuffer[index]; }
-		vk::Semaphore GetSemaphore() const { return mSemaphore; }
-		vk::PipelineStageFlags GetPipelineStage() const { return mPipelineStageFlags; }
-
-    protected:
-        vk::RenderPass mRenderPass;
-        vk::CommandPool mCommandPool;
-        std::vector<vk::Framebuffer> mFramebuffer;
-        std::vector<vk::CommandBuffer> mCommandBuffer;
-		vk::Semaphore mSemaphore;
-		vk::PipelineStageFlags mPipelineStageFlags;
-		std::vector<vk::PipelineStageFlags> mWaitStages;
-    };
 
     class RenderpassManager
     {
@@ -44,20 +23,31 @@ namespace Engine
 
     public:
         void Init();
+		void PostShaderLoadInit();
 		void PostSwapchainInit();
         void Destroy();
 
         template<typename T>
-        RenderPass* AddPass()
+        RenderPass* AddPass(const std::string& name)
         {
+			THROW_IF(mPassMap.find(name) != mPassMap.end(), "RenderPass already added: {0}", name.c_str());
+
             RenderPass* pass = T::Allocate();
             pass->Init();
             mPass.push_back(pass);
+			mPassMap[name] = pass;
             return pass;
         }
    
 		template<typename T = RenderPass>
         T* GetPassAt(uint32_t index) const { return reinterpret_cast<T*>(mPass[index]); }
+		
+		template<typename T = RenderPass>
+		T* GetPass(const std::string& name)
+		{
+			THROW_IF(mPassMap.find(name) == mPassMap.end(), "RenderPass {0} is does not exist", name.c_str());
+			return reinterpret_cast<T*>(mPassMap[name]);
+		}
 
 		vk::Fence GetFenceAt(uint32_t index) const { return mFence[index]; }
 
@@ -70,6 +60,7 @@ namespace Engine
 		void DestroyFences();
 
         std::vector<RenderPass*> mPass;
+        std::unordered_map<std::string, RenderPass*> mPassMap;
 		std::vector<vk::Fence> mFence;
     };
 

@@ -7,6 +7,7 @@
 
 #define GBufferManager Engine::g_BufferManager
 #define CreateVertexIndexBuffer(v, i) g_BufferManager.Allocate(v, i, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer)
+#define CreateVertexBuffer(v) g_BufferManager.Allocate(v, vk::BufferUsageFlagBits::eVertexBuffer)
 #define BufferAt(i) g_BufferManager.GetBuffer(i)
 #define GVmaAllocator g_BufferManager.mAllocator
 
@@ -38,7 +39,7 @@ namespace Engine
             VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
             VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo);
 
-        // ---- Allocation functions ---- //
+        // ---- Allocation function for indexed vertex buffer ---- //
         template<typename T, typename U>
         IndexOffset Allocate(const std::vector<T>& data1, const std::vector<U>& data2,
             vk::BufferUsageFlags flags)
@@ -83,6 +84,44 @@ namespace Engine
 
             return indexOffset;
         }
+
+		// ---- Allocation function for vertex buffer ---- //
+		template<typename T>
+		uint32_t Allocate(const std::vector<T>& data, vk::BufferUsageFlags flags)
+		{
+			vk::Buffer dataBuffer, stagingBuffer;
+
+			// 1. Allocate the staging buffers
+			vk::DeviceSize size = sizeof(T) * data.size();
+
+			VmaAllocation stagAllocation;
+			VmaAllocationInfo stagAllocInfo;
+			stagingBuffer = CreateBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
+				VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT,
+				stagAllocation, &stagAllocInfo);
+
+			// 2. Copy the contents from data to the staging buffers
+			memcpy(stagAllocInfo.pMappedData, data.data(), size);
+
+			// 3. Create the local device buffer
+			VmaAllocation bufAllocation;
+			dataBuffer = CreateBuffer(size, vk::BufferUsageFlagBits::eTransferDst | flags,
+				VMA_MEMORY_USAGE_GPU_ONLY, 0, bufAllocation, nullptr);
+
+			// 4. Update global arrays and create copy request
+			uint32_t bufIndex = (uint32_t)mBuffer.size();
+			mBuffer.push_back(dataBuffer);
+			mBufferAllocation.push_back(bufAllocation);
+
+			uint32_t stagIndex = (uint32_t)mStagBuffer.size();
+			mStagBuffer.push_back(stagingBuffer);
+			mStagBufferAllocation.push_back(stagAllocation);
+
+			CopyRequest req{ bufIndex, stagIndex };
+			mCopyRequest.push(req);
+
+			return bufIndex;
+		}
 
         VmaAllocator mAllocator;
         vk::Fence mBufferFence;

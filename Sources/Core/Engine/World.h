@@ -13,6 +13,21 @@ namespace otr
 
 namespace Engine
 {
+	struct SkySettings
+	{
+		Vector3 color;
+		unsigned int hdrTex;
+		unsigned int hdrEnv;
+		bool useTex;
+
+		void GetClearColor(float& r, float& g, float& b) const
+		{
+			r = color.x;
+			g = color.y;
+			b = color.z;
+		}
+	};
+
     // Represents the world of drawable entities
     class World
     {
@@ -40,6 +55,8 @@ namespace Engine
         Vector3 mCameraPos;
         Vector3 mViewBoundingMin;
         Vector3 mViewBoundingMax;
+		SkySettings mSkySettings;
+		Matrix4 mSkyViewProj;
     private:
         MEM_POOL_DECLARE(World);
         void DestroyEntities();

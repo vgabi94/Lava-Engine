@@ -48,9 +48,4 @@ namespace Engine
 {
     typedef void(*UpdateCback)();
     typedef void(*FramebufferResizeCback)(int, int);
-
-    enum class PipelineType
-    {
-        Unknown, Default, Albedo, Phong
-    };
 }
