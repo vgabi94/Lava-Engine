@@ -172,7 +172,7 @@ namespace Vulkan
 
 			if (!layerFound)
 			{
-				LOG_INFO("Could not enable {0} layer!\n", layerName);
+				LOG_INFO("[ERR] Could not enable {0} layer!\n", layerName);
 			}
 			else
 			{

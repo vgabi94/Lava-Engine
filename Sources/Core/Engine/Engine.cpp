@@ -11,6 +11,7 @@
 #include <Manager\RenderpassManager.h>
 #include <Manager\ResourceManager.h>
 #include <Manager\MaterialManager.h>
+#include <Manager\PrimitiveManager.h>
 
 #define EngineGlobals Engine::g_EngineSettings
 
@@ -24,6 +25,7 @@ namespace Engine
         assert(glfwInit());
         CreateWindow(params);
         //g_TaskScheduler.Init();
+		g_PrimitiveManager.Init();
         InitGraphics();
     }
 
@@ -41,6 +43,7 @@ namespace Engine
         g_RenderpassManager.Destroy();
         g_WorldManager.Destroy();
         DestroyGraphics();
+		g_PrimitiveManager.Destroy();
         //g_TaskScheduler.Destroy();
         glfwDestroyWindow(mWindow);
         glfwTerminate();

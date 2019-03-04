@@ -2,6 +2,8 @@
 
 namespace Engine
 {
+	PrimitiveManager g_PrimitiveManager;
+
 	void PrimitiveManager::InitSkyBox()
 	{
 		m_SkyBox =

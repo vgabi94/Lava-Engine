@@ -12,6 +12,8 @@
 
 namespace Engine
 {
+	MEM_POOL_DEFINE(SkyPass);
+
 	void SkyPass::Init()
 	{
 		RenderPass::Init();
@@ -200,7 +202,7 @@ namespace Engine
 
 		mCommandBuffer[imageIndex].bindVertexBuffers(0, 1, &vbo, &vertOffset);
 
-		mCommandBuffer[imageIndex].draw(mSkyBox.size(), 1, 0, 0);
+		mCommandBuffer[imageIndex].draw(mCountVBO, 1, 0, 0);
 
 		mCommandBuffer[imageIndex].endRenderPass();
 

@@ -50,6 +50,7 @@ namespace Engine
             // 1. Allocate the staging buffers
             indexOffset.second = sizeof(T) * data1.size();
             vk::DeviceSize size = indexOffset.second + sizeof(U) * data2.size();
+			assert(size > 0);
 
             VmaAllocation stagAllocation;
             VmaAllocationInfo stagAllocInfo;
@@ -93,6 +94,7 @@ namespace Engine
 
 			// 1. Allocate the staging buffers
 			vk::DeviceSize size = sizeof(T) * data.size();
+			assert(size > 0);
 
 			VmaAllocation stagAllocation;
 			VmaAllocationInfo stagAllocInfo;
