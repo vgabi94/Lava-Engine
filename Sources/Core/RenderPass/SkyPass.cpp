@@ -84,7 +84,7 @@ namespace Engine
 			vk::AttachmentStoreOp::eDontCare,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
-			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eDepthStencilAttachmentOptimal,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal
 		);
 
@@ -95,7 +95,7 @@ namespace Engine
 			vk::AttachmentStoreOp::eStore,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
-			vk::ImageLayout::eUndefined,
+			vk::ImageLayout::eColorAttachmentOptimal,
 			vk::ImageLayout::ePresentSrcKHR
 		);
 
@@ -183,13 +183,16 @@ namespace Engine
 		mCommandBuffer[imageIndex].setScissor(0, { scissor });
 
 		const Pipeline& pipe = PipelineOfType(mMaterial->mPipeType);
+
+		mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrTex);
+
 		vk::Pipeline pipeline = pipe.mPipeline;
 		mCommandBuffer[imageIndex].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
 		SkyPS pc;
 		pc.ViewProj = CurrentWorld->mSkyViewProj;
-		pc.exposure = 16.0f; // TODO params
-		pc.gamma = 2.2f;
+		pc.exposure = CurrentWorld->mSkySettings.exposure;
+		pc.gamma = CurrentWorld->mSkySettings.gamma;
 
 		mCommandBuffer[imageIndex].pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex
 			| vk::ShaderStageFlagBits::eFragment,

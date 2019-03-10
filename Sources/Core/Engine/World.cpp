@@ -164,6 +164,11 @@ extern "C"
 		world->mSkySettings = skySettings;
 	}
 
+	LAVA_API void SetSkyViewProj_Native(Engine::World* world, Engine::Matrix4 viewProj)
+	{
+		world->mSkyViewProj = viewProj;
+	}
+
     LAVA_API void SetViewBounds_Native(Engine::World* world, Engine::Vector3 bmin, Engine::Vector3 bmax)
     {
         world->mViewBoundingMin = bmin;

@@ -83,6 +83,14 @@ namespace Lava.Engine
             0.0f, 0.0f, 0.5f, 1.0f
         });
 
+        // No UP flipping
+        private static readonly Matrix4 CLIP2 = new Matrix4(new float[] {
+            1.0f, 0.0f, 0.0f, 0.0f,
+            0.0f, 1.0f, 0.0f, 0.0f,
+            0.0f, 0.0f, 0.5f, 0.0f,
+            0.0f, 0.0f, 0.5f, 1.0f
+        });
+
         public static Camera Main { get; set; }
 
         public Matrix4 ViewProjection
@@ -90,6 +98,14 @@ namespace Lava.Engine
             get
             {
                 return CLIP * Projection * View;
+            }
+        }
+
+        public Matrix4 SkyViewProj
+        {
+            get
+            {
+                return CLIP * Projection * new Matrix4(View.Upper3x3);
             }
         }
 

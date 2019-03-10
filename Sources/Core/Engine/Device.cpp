@@ -49,7 +49,21 @@ namespace Vulkan
                     mApiMajor = (uint16_t)VK_VERSION_MAJOR(pdp.apiVersion);
                     mApiMinor = (uint16_t)VK_VERSION_MINOR(pdp.apiVersion);
                     mApiPatch = (uint16_t)VK_VERSION_PATCH(pdp.apiVersion);
-                    break;
+					
+					uint16_t x, y, z, a;
+					uint32_t b;
+					x = (uint16_t)VK_VERSION_MAJOR(pdp.apiVersion);
+					y = (uint16_t)VK_VERSION_MINOR(pdp.apiVersion);
+					z = (uint16_t)VK_VERSION_PATCH(pdp.apiVersion);
+					a = (uint16_t)VK_VERSION_MAJOR(pdp.driverVersion);
+					b = VK_VERSION_MINOR(pdp.driverVersion) | VK_VERSION_PATCH(pdp.driverVersion);
+					LOG_INFO("Chosen <{}> {} with supported API {}.{}.{} and driver version {}.{}\n",
+						vk::to_string(pdp.deviceType),
+						pdp.deviceName,
+						x, y, z,
+						a, b);
+                    
+					break;
                 }
             }
         }

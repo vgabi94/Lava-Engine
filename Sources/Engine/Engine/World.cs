@@ -19,6 +19,9 @@ namespace Lava.Engine
         private static extern void SetSkySettings_Native(IntPtr world, SkySettings skySettings);
 
         [DllImport("LavaCore.dll")]
+        private static extern void SetSkyViewProj_Native(IntPtr world, Mathematics.Matrix4 viewProj);
+
+        [DllImport("LavaCore.dll")]
         private static extern void SetViewBounds_Native(IntPtr world, Mathematics.Vector3 bmin, Mathematics.Vector3 bmax);
 
         [DllImport("LavaCore.dll")]
@@ -59,10 +62,9 @@ namespace Lava.Engine
                 Mathematics.Vector3 bmin = Camera.Main.Position - new Mathematics.Vector3(Camera.Main.FarPlane + 5f);
                 Mathematics.Vector3 bmax = Camera.Main.Position + new Mathematics.Vector3(Camera.Main.FarPlane + 5f);
                 SetViewBounds_Native(NativePtr, bmin, bmax);
+                SetSkyViewProj_Native(NativePtr, Camera.Main.SkyViewProj);
+                SetSkySettings_Native(NativePtr, skySettings);
             }
-
-            SetSkySettings_Native(NativePtr, skySettings);
-            // TODO update sky ViewProj
         }
 
         internal World(bool makeCurrent = false, bool hasPhysics = true)

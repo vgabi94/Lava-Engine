@@ -19,6 +19,8 @@ namespace Engine
 		unsigned int hdrTex;
 		unsigned int hdrEnv;
 		bool useTex;
+		float exposure;
+		float gamma;
 
 		void GetClearColor(float& r, float& g, float& b) const
 		{

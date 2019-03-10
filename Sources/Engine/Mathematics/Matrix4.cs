@@ -127,6 +127,8 @@ namespace Lava.Mathematics
                 M44 = m44;
             }
         }
+
+        public Matrix4(Matrix3 m) : this(m.M11, m.M12, m.M13, 0f, m.M21, m.M22, m.M23, 0f, m.M31, m.M32, m.M33, 0f, 0f, 0f, 0f, 1f) { }
         #endregion
 
         #region Properties

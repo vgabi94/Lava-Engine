@@ -23,6 +23,7 @@ vec2 SampleSphericalMap(vec3 v)
 void main()
 {
     vec2 uv = SampleSphericalMap(normalize(FragPos));
+    uv.y = 1.0 - uv.y;
     vec3 color = texture(skyTex, uv).rgb;
     
     color = ApplyToneMapping(color, Exposure);

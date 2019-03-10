@@ -9,6 +9,8 @@ namespace Lava.Engine
         public uint hdrTex;
         public uint hdrEnv; // Irradiance map
         public bool useTex;
+        public float exposure;
+        public float gamma;
 
         public void SetColor(Color color)
         {

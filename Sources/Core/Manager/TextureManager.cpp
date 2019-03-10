@@ -231,7 +231,7 @@ namespace Engine
         Texture tex;
         tex.mDepth = 1;
         stbi_uc* pixels = stbi_load(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb_alpha);
-        vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * tex.mChannels;
+        vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha;
         assert(pixels);
         
         VmaAllocation stagAllocation;
@@ -285,8 +285,8 @@ namespace Engine
 	{
 		Texture tex;
 		tex.mDepth = 1;
-		float* pixels = stbi_loadf(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb);
-		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * tex.mChannels * sizeof(float);
+		float* pixels = stbi_loadf(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb_alpha);
+		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha * sizeof(float);
 		assert(pixels);
 
 		VmaAllocation stagAllocation;
@@ -304,9 +304,9 @@ namespace Engine
 		vk::Extent3D extent((uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth);
 		tex.mImage = CreateImage2D(extent,
 			vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-			VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr);
+			VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr, vk::Format::eR32G32B32A32Sfloat);
 
-		tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR16G16B16A16Snorm);
+		tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR32G32B32A32Sfloat);
 		tex.mSampler = CreateHDRSampler();
 
 		uint32_t index = mTexture.size();

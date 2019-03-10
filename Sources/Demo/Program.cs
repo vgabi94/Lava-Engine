@@ -46,8 +46,8 @@ namespace Demo
             //uint[] i = new uint[3] { 0, 1, 2 };
 
             //uint tex = Texture.Load2D(Settings.TextureDirPath + "\\texture.jpg");
-            uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky.hdr");
-            uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv.hdr");
+            uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky2.hdr");
+            uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv2.hdr");
 
             uint tex = Texture.FromColor(Color.FromHex("#7FFF00"));
             StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
@@ -80,6 +80,8 @@ namespace Demo
 
             World world = WorldManager.CreateWorld();
             world.skySettings.SetColor(Color.GRAY);
+            world.skySettings.gamma = 2.2f;
+            world.skySettings.exposure = 16f;
 
             var phys = world.PhysicsWorld;
             //phys.Gravity = new Vector3(0f, -2f, 0f);
@@ -119,6 +121,7 @@ namespace Demo
             InitializeGame();
 
             Application.Run();
+            System.GC.Collect();
             System.Console.ReadKey();
         }
     }
