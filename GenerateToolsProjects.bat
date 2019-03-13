@@ -1,0 +1,1 @@
+Sharpmake\Sharpmake.Application.exe /sources(@"Sources\shader2cpp.sharpmake.cs")
