@@ -1,12 +1,4 @@
-struct LightSource
-{
-    vec4 position;
-    vec4 direction;
-    // x = type of light
-    // y = attenuation
-    vec4 info;
-    // TODO
-}
+#include "buffers.h"
 
 layout(constant_id = 0) const int NUM_LIGHTS = 32;
 
