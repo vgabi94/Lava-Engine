@@ -8,4 +8,4 @@ struct LightSource
     // y = attenuation
     gpuVec4 info;
     // TODO
-}
+};

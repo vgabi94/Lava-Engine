@@ -1,9 +1,10 @@
 #ifdef LAVA_TYPES
-    #define gpuVec3 Vector3
-    #define gpuVec2 Vector2
-    #define gpuVec4 Vector4
-    #define gpuMat3 Matrix3
-    #define gpuMat4 Matrix4
+#include <Common\MathTypes.h>
+    #define gpuVec3 Engine::Vector3
+    #define gpuVec2 Engine::Vector2
+    #define gpuVec4 Engine::Vector4
+    #define gpuMat3 Engine::Matrix3
+    #define gpuMat4 Engine::Matrix4
 #else
     #define gpuVec3 vec3
     #define gpuVec2 vec2

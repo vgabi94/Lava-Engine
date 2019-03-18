@@ -51,6 +51,7 @@ namespace LavaEngine
             conf.IncludePaths.Add(@"[project.SharpmakeCsPath]\extern");
             conf.IncludePaths.Add(@"$(VULKAN_SDK)\Include");
             conf.IncludePaths.Add(@"[project.BasePath]");
+            conf.IncludePaths.Add(@"[project.Root]\Data\ShaderSource");
 
             conf.LibraryPaths.Add(@"[project.Root]\Dependencies");
             conf.LibraryPaths.Add(@"$(VULKAN_SDK)\Lib");
@@ -75,6 +76,7 @@ namespace LavaEngine
 
             conf.Defines.Add("_CRT_SECURE_NO_WARNINGS");
             conf.Defines.Add("LAVA_EXPORTS");
+            conf.Defines.Add("LAVA_TYPES");
 
             conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.v10_0_16299_0);
             conf.Options.Add(Options.Vc.Compiler.Exceptions.Enable);

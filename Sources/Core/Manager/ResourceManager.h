@@ -2,7 +2,8 @@
 
 #include <vulkan\vulkan.hpp>
 #include <array>
-#include <vk_mem_alloc.h>
+#include <Engine\GpuArrayBuffer.h>
+#include <buffers.h>
 
 namespace Engine
 {
@@ -21,13 +22,18 @@ namespace Engine
 
         vk::DescriptorSetLayout GetDescriptorSetLayoutAt(uint32_t index);
 
+		GpuArrayBuffer<LightSource>& GetLightsBuffer() { return mLights; };
+
     private:
+		// Global descriptor set layouts used by renderpasses
         std::array<vk::DescriptorSetLayout, 8> mDescLayouts;
 
 		vk::Image mDepthImage;
 		vk::Format mDepthFormat;
 		vk::ImageView mDepthImageView;
 		VmaAllocation mDepthAlloc;
+
+		GpuArrayBuffer<LightSource> mLights;
     };
 
     extern ResourceManager g_ResourceManager;
