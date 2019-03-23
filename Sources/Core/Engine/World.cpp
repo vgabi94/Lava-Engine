@@ -5,6 +5,7 @@
 #include "Engine.h"
 #include <Manager\BufferManager.h>
 #include <Manager\WorldManager.h>
+#include <Manager\ResourceManager.h>
 #define OCTREE_IMPL
 #include <Octree.h>
 
@@ -63,6 +64,42 @@ namespace Engine
 
         mCommandBuffer = g_vkDevice.allocateCommandBuffers(cmdBufferAllocInfo);
     }
+
+	// TODO Add light sources
+	void World::UploadLightSources() const
+	{
+		auto& lightsBuffer = g_ResourceManager.GetLightsBuffer();
+		
+		if (lightsBuffer.Size() != mLightInfo.size())
+		{
+			lightsBuffer.Clear();
+			lightsBuffer.Reserve(mLightInfo.size());
+			
+			for (auto& li : mLightInfo)
+			{
+				LightSource ls;
+				ls.direction = Vector4(li.direction, 0.0f);
+				ls.position = Vector4(li.position, 1.0f);
+				ls.color = li.color;
+				ls.type.x = static_cast<int>(li.type);
+				lightsBuffer.Add(ls);
+			}
+		}
+		else
+		{
+			for (size_t i = 0; i < lightsBuffer.Size(); i++)
+			{
+				LightSource& ls = lightsBuffer[i];
+				const LightInfo& li = mLightInfo[i];
+				ls.direction = Vector4(li.direction, 0.0f);
+				ls.position = Vector4(li.position, 1.0f);
+				ls.color = li.color;
+				ls.type.x = static_cast<int>(li.type);
+			}
+		}
+
+		lightsBuffer.Commit();
+	}
     
     void World::AddEntity(Entity * ent)
     {
@@ -153,6 +190,11 @@ extern "C"
     {
         world->AddEntity(ent);
     }
+
+	LAVA_API void AddLightInfo_Native(Engine::World* world, Engine::LightInfo li)
+	{
+		world->mLightInfo.push_back(li);
+	}
 
     LAVA_API void SetCameraPos_Native(Engine::World* world, Engine::Vector3 camPos)
     {

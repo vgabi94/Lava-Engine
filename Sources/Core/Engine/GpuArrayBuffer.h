@@ -23,6 +23,8 @@ namespace Engine
 		void Clear() { mVectorBuffer.clear(); mDirty = true; }
 
 		size_t Size() const { return mVectorBuffer.size(); }
+		void Resize(size_t newSize) { mVectorBuffer.resize(newSize); }
+		void Reserve(size_t newSize) { mVectorBuffer.reserve(newSize); }
 
 		T& operator[](uint32_t i) { mSoftDirty = true; return mVectorBuffer[i]; }
 

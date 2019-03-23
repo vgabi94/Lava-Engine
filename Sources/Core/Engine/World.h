@@ -2,6 +2,8 @@
 
 #include "Entity.h"
 #include "PhysicsWorld.h"
+#include <Common\LightInfo.h>
+#include "buffers.h"
 
 #define WORLD_DIRTY 0x3
 #define WORLD_CLEAN 0x0
@@ -50,6 +52,8 @@ namespace Engine
 
         PhysicsWorld* GetPhysicsWorld() const { return mPhysicsWorld; }
 
+		void UploadLightSources() const;
+
         vk::CommandBuffer GetWorldCommandBuffer(uint32_t index) const 
         { return mCommandBuffer[index]; }
 
@@ -59,6 +63,7 @@ namespace Engine
         Vector3 mViewBoundingMax;
 		SkySettings mSkySettings;
 		Matrix4 mSkyViewProj;
+		std::vector<LightInfo> mLightInfo;
     private:
         MEM_POOL_DECLARE(World);
         void DestroyEntities();

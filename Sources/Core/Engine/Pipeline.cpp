@@ -65,6 +65,9 @@ namespace Engine
         static auto layout = uniform0.as<std::string, uint32_t, std::string, std::string>()
             | uniform.as<std::string, uint32_t, uint32_t, std::string, std::string>();
         static auto mainPattern = abu::apply_skipper(layout, space);
+
+		static auto slot = attr >> abu::lit('(') >> abu::int_ >> abu::lit(')');
+		static auto slotPattern = abu::apply_skipper(slot.as<uint32_t>(), space);
     }
     // ------------------------- //
 
@@ -356,7 +359,7 @@ namespace Engine
             GetBindingsFromShader(shaderPath[i].c_str(), bindings);
         }
 
-        mBindings = bindings;
+        // mBindings = bindings; TODO DELETE
 
         // Convert to poolSizes and init the descriptor allocator
         std::vector<vk::DescriptorPoolSize> poolSizes;
@@ -441,9 +444,16 @@ namespace Engine
                 }
                 else
                 {
-                    setIndices.push_back(dest.set);
+					THROW("Slots other than 0 are not supported!");
                 }
             }
+			else if (line.find("SLOT") == 0)
+			{
+				uint32_t dest;
+				auto ok = abu::parse(line.begin(), line.end(), Patterns::slotPattern, dest);
+				THROW_IF(ok != abu::Result::SUCCESS, "Slot parsing error at line: {}", line);
+				setIndices.push_back(dest);
+			}
         }
 
         for (auto i : setIndices)

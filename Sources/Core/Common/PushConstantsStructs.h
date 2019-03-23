@@ -8,6 +8,7 @@ namespace Engine
 		Matrix4 MVP;
 		Matrix4 model;
 		Vector3 eyePos;
+		int numLights;
 	};
 
 	struct SkyPS

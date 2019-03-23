@@ -41,6 +41,7 @@ namespace Engine
 
     void FramePass::Setup()
     {
+		CurrentWorld->UploadLightSources();
         CurrentWorld->RecordWorldCommandBuffers(GSwapchain.GetCurrentFrameIndex());
         RecordCommandBuffer(GSwapchain.GetCurrentFrameIndex());
     }

@@ -66,6 +66,9 @@ namespace Demo
             VisualEntity bunny2 = new VisualEntity(mesh2, material2);
             VisualEntity blocuri = new VisualEntity(blocuriMesh, material3);
 
+            Entity sun = Entity.NewWithComponent(out DirectionalLight sunLight);
+            sunLight.Direction = new Vector3(1f, -1f, 0f);
+
             var trans = bunny2.GetComponent<Transform>();
             trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
             trans.Scale *= 2f;
@@ -99,6 +102,7 @@ namespace Demo
             world.AddEntity(bunny2);
             world.AddEntity(camEnt);
             world.AddEntity(blocuri);
+            world.AddEntity(sun);
 
             for (int i = 0; i < 100; i++)
             {

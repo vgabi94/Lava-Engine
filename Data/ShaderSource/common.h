@@ -1,3 +1,6 @@
+#ifndef COMMON_H
+#define COMMON_H
+
 #define UNIFORM(set_num, binding_num, type, name) layout(set = set_num, binding = binding_num) uniform type name
 #define BUFFER(set_num, binding_num, type, name) layout(set = set_num, binding = binding_num) buffer type name
 
@@ -45,3 +48,5 @@ vec3 ApplyGammaCorrection(vec3 color, float gamma)
 {
     return pow(color, vec3(1.0f / gamma));
 }
+
+#endif

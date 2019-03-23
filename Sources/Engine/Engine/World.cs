@@ -13,6 +13,9 @@ namespace Lava.Engine
         private static extern void AddEntity_Native(IntPtr world, IntPtr ent);
 
         [DllImport("LavaCore.dll")]
+        private static extern void AddLightInfo_Native(IntPtr world, LightInfo li);
+
+        [DllImport("LavaCore.dll")]
         private static extern void SetCameraPos_Native(IntPtr world, Mathematics.Vector3 camPos);
 
         [DllImport("LavaCore.dll")]
@@ -38,6 +41,12 @@ namespace Lava.Engine
                 VisualEntity vent = ent as VisualEntity;
                 vent.UpdatePosition();
                 AddEntity_Native(NativePtr, vent.NativePtr);
+            }
+
+            Light lightComponent = ent.GetComponent<Light>();
+            if (lightComponent != null)
+            {
+                AddLightInfo_Native(NativePtr, lightComponent.ToLightInfo());
             }
             
             entities.Add(ent);
