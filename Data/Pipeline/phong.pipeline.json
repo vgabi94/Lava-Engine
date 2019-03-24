@@ -1,4 +1,5 @@
 {
     "vertexInput": "Vertex",
-    "shaders": ["phong.vert", "phong.frag"]
+    "shaders": ["phong.vert", "phong.frag"],
+    "globalsets": [1, 2]
 }

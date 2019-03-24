@@ -3,6 +3,7 @@
 #include <vulkan\vulkan.hpp>
 #include <array>
 #include <Engine\GpuArrayBuffer.h>
+#include <Engine\GpuBuffer.h>
 #include <Engine\DescriptorAllocator.h>
 #include <buffers.h>
 
@@ -21,11 +22,29 @@ namespace Engine
 		vk::Format GetDepthFormat() const { return mDepthFormat; }
 		vk::ImageView GetDepthImageView() const { return mDepthImageView; }
 
-        //vk::DescriptorSet GetDescriptorSet(uint32_t slot) const;
+        vk::DescriptorSet GetDescriptorSet(uint32_t slot) const;
 		vk::DescriptorSetLayout GetDescriptorSetLayoutAt(uint32_t slot) const;
-		void WriteDescriptorAtSlot(uint32_t slot);
+		
+		template<typename T>
+		void WriteBufferToDescriptorSlot(uint32_t slot, const T& buffer)
+		{
+			THROW_IF(slot > 8, "Set slot must not be greater than 8!");
+			THROW_IF(slot == 0, "Set slot 0 is reserved for materials!");
+
+			uint32_t index = slot - 1;
+			vk::WriteDescriptorSet writeDescSet;
+			writeDescSet.descriptorCount = 1;
+			writeDescSet.descriptorType = vk::DescriptorType::eUniformBuffer;
+			writeDescSet.dstArrayElement = 0;
+			writeDescSet.dstBinding = 0;
+			writeDescSet.dstSet = mDescSets[index];
+			vk::DescriptorBufferInfo bufferInfo(buffer.GetBuffer(), 0, VK_WHOLE_SIZE);
+			writeDescSet.pBufferInfo = &bufferInfo;
+			g_vkDevice.updateDescriptorSets({ writeDescSet }, { });
+		}
 
 		GpuArrayBuffer<LightSource>& GetLightsBuffer() { return mLights; };
+		GpuBuffer<FrameConsts>& GetFrameConstsBuffer() { return mFrameConsts; }
 
     private:
 		void InitDescriptorAllocatorsAndSets();
@@ -43,6 +62,7 @@ namespace Engine
 		VmaAllocation mDepthAlloc;
 
 		GpuArrayBuffer<LightSource> mLights;
+		GpuBuffer<FrameConsts> mFrameConsts;
     };
 
     extern ResourceManager g_ResourceManager;

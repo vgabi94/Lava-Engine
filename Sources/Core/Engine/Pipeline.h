@@ -32,6 +32,7 @@ namespace Engine
         vk::RenderPass mRenderPass;
 
         std::vector<std::string> mShaderNames;
+		std::vector<uint32_t> mGlobalSets;
 
         void ToVulkanType(vk::GraphicsPipelineCreateInfo& gpCI);
     };
@@ -52,6 +53,7 @@ namespace Engine
         }
 
         vk::DescriptorSet AllocateDescriptorSet();
+		void BindGlobalDescSets(vk::CommandBuffer cmdBuff) const;
 
         vk::Pipeline mPipeline;
         vk::PipelineLayout mPipelineLayout;

@@ -65,7 +65,6 @@ namespace Engine
         mCommandBuffer = g_vkDevice.allocateCommandBuffers(cmdBufferAllocInfo);
     }
 
-	// TODO Add light sources
 	void World::UploadLightSources() const
 	{
 		auto& lightsBuffer = g_ResourceManager.GetLightsBuffer();
@@ -99,6 +98,14 @@ namespace Engine
 		}
 
 		lightsBuffer.Commit();
+	}
+
+	void World::UploadFrameConsts() const
+	{
+		auto& frameConsts = g_ResourceManager.GetFrameConstsBuffer();
+		frameConsts.Get().ambientLight = mSkySettings.ambient;
+		frameConsts.Get().numLights = mLightInfo.size();
+		frameConsts.Commit();
 	}
     
     void World::AddEntity(Entity * ent)

@@ -10,7 +10,9 @@ namespace Engine
 		static constexpr uint32_t INIT_CAPACITY = 2;
 	public:
 		GpuArrayBuffer(vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eUniformBuffer);
-		~GpuArrayBuffer();
+
+		void Init() { /* buffer is initialized in Commit() method. */ }
+		void Destroy() { vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation); }
 
 		vk::Buffer GetBuffer() const
 		{
@@ -51,19 +53,13 @@ namespace Engine
 	}
 	
 	template<typename T>
-	inline GpuArrayBuffer<T>::~GpuArrayBuffer()
-	{
-		vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation);
-	}
-
-	template<typename T>
 	void GpuArrayBuffer<T>::CreateMappedGPUBuffer()
 	{
-		if (mBuffer != VK_NULL_HANDLE)
+		if (mBuffer)
 			vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation);
 		vk::DeviceSize size = mVectorBuffer.size() * sizeof(T);
 
-		mBuffer = CreateBuffer(size, mFlags, VMA_MEMORY_USAGE_CPU_ONLY,
+		mBuffer = g_BufferManager.CreateBuffer(size, mFlags, VMA_MEMORY_USAGE_CPU_ONLY,
 			VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			mVmaAllocation, &mVmaAllocInfo);
 	}

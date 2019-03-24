@@ -8,12 +8,14 @@ namespace Engine
 	{
 	public:
 		GpuBuffer(vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eUniformBuffer);
-		~GpuBuffer();
 
-		vk::Buffer GetBuffer()
+		void Init() { CreateMappedGPUBuffer(); }
+		void Destroy() { vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation); }
+
+		vk::Buffer GetBuffer() const
 		{
 			THROW_IF(mDirty, "Can't return buffer without commited data!");
-			return mData;
+			return mBuffer;
 		}
 
 		T& Get() { mDirty = true; return mData; }
@@ -31,7 +33,7 @@ namespace Engine
 		VmaAllocationInfo mVmaAllocInfo;
 		T mData;
 
-		bool mDirty
+		bool mDirty;
 	};
 
 
@@ -39,13 +41,6 @@ namespace Engine
 	inline GpuBuffer<T>::GpuBuffer(vk::BufferUsageFlags flags)
 		: mDirty(true), mFlags(flags), mBuffer(nullptr)
 	{
-		CreateMappedGPUBuffer();
-	}
-
-	template<typename T>
-	inline GpuBuffer<T>::~GpuBuffer()
-	{
-		vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation);
 	}
 
 	template<typename T>
@@ -61,11 +56,11 @@ namespace Engine
 	template<typename T>
 	inline void GpuBuffer<T>::CreateMappedGPUBuffer()
 	{
-		if (mBuffer != VK_NULL_HANDLE)
+		if (mBuffer)
 			vmaDestroyBuffer(GVmaAllocator, mBuffer, mVmaAllocation);
 		vk::DeviceSize size = sizeof(T);
 
-		mBuffer = CreateBuffer(size, mFlags, VMA_MEMORY_USAGE_CPU_ONLY,
+		mBuffer = g_BufferManager.CreateBuffer(size, mFlags, VMA_MEMORY_USAGE_CPU_ONLY,
 			VMA_ALLOCATION_CREATE_MAPPED_BIT,
 			mVmaAllocation, &mVmaAllocInfo);
 	}

@@ -6,6 +6,7 @@
 #include <Manager\TextureManager.h>
 #include <Manager\BufferManager.h>
 #include <Manager\ResourceManager.h>
+#include <setslots.h>
 
 namespace Engine
 {
@@ -42,6 +43,9 @@ namespace Engine
     void FramePass::Setup()
     {
 		CurrentWorld->UploadLightSources();
+		CurrentWorld->UploadFrameConsts();
+		g_ResourceManager.WriteBufferToDescriptorSlot(LIGHTSOURCE_SLOT, g_ResourceManager.GetLightsBuffer());
+		g_ResourceManager.WriteBufferToDescriptorSlot(FRAMECONSTS_SLOT, g_ResourceManager.GetFrameConstsBuffer());
         CurrentWorld->RecordWorldCommandBuffers(GSwapchain.GetCurrentFrameIndex());
         RecordCommandBuffer(GSwapchain.GetCurrentFrameIndex());
     }

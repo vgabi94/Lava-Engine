@@ -15,6 +15,9 @@
 //     LightSource Light[NUM_LIGHTS];
 // }
 
-layout(std140, set = LIGHTSOURCE_SLOT, binding = 0) uniform LightSource g_LightSource[MAX_NUM_LIGHTS];
+layout(std140, set = LIGHTSOURCE_SLOT, binding = 0) uniform LightSourceBlock
+{
+    LightSource g_LightSource[MAX_NUM_LIGHTS];
+};
 
 #endif

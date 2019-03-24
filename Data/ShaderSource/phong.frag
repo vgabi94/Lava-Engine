@@ -31,11 +31,11 @@ void main()
         vec3 lightDir;
         if (g_LightSource[i].type.x == DIRECTIONAL_LIGHT)
         {
-            lightDir = normalize(g_LightSource[i].direction);
+            lightDir = normalize(g_LightSource[i].direction.xyz);
         }
         else
         {
-            lightDir = normalize(g_LightSource[i].position - FragPos);
+            lightDir = normalize(g_LightSource[i].position.xyz - FragPos);
         }
 
         float diffuse = max(dot(normal, lightDir), 0.0);
@@ -45,6 +45,6 @@ void main()
         lightColor += (diffuse + specular) * 1/*intensity*/ * 1/*atten*/ * g_LightSource[i].color;
     }
     
-    vec3 fragColor = color * g_FrameConsts.ambientLight * lightColor.rgb;
+    vec3 fragColor = color * (g_FrameConsts.ambientLight * vec3(1,1,1) + lightColor.rgb);
     finalColor = vec4(fragColor, 1);
 }

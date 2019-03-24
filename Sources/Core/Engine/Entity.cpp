@@ -32,6 +32,7 @@ namespace Engine
             0, sizeof(DefaultPS), &pc);
 
         mMaterial->Bind(cmdBuff);
+		pipe.BindGlobalDescSets(cmdBuff);
 
         vk::Buffer vbo = BufferAt(mMesh->mVBO);
         vk::DeviceSize vertOffset = 0;

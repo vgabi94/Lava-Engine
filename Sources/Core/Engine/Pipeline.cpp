@@ -66,8 +66,8 @@ namespace Engine
             | uniform.as<std::string, uint32_t, uint32_t, std::string, std::string>();
         static auto mainPattern = abu::apply_skipper(layout, space);
 
-		static auto slot = attr >> abu::lit('(') >> abu::int_ >> abu::lit(')');
-		static auto slotPattern = abu::apply_skipper(slot.as<uint32_t>(), space);
+		/*static auto slot = attr >> abu::lit('(') >> abu::int_ >> abu::lit(')');
+		static auto slotPattern = abu::apply_skipper(slot.as<uint32_t>(), space);*/
     }
     // ------------------------- //
 
@@ -290,6 +290,10 @@ namespace Engine
             std::string renderPass = j["renderPass"];
 			temp.mRenderPass = g_RenderpassManager.GetPass(renderPass)->GetVkObject();
         }
+		if (HAS_PROPERTY("globalsets"))
+		{
+			temp.mGlobalSets.assign(j["globalsets"].begin(), j["globalsets"].end());
+		}
     }
  
     Pipeline Pipeline::FromJSON(const char * jsonFile)
@@ -347,6 +351,26 @@ namespace Engine
         return mDescAllocator.AllocateDescriptorSet();
     }
 
+	void Pipeline::BindGlobalDescSets(vk::CommandBuffer cmdBuff) const
+	{
+		if (mSetIndices.empty()) return;
+
+		uint32_t firstSet = mSetIndices[0];
+		std::vector<vk::DescriptorSet> descSets;
+		descSets.reserve(mSetIndices.size());
+		
+		for (auto slot : mSetIndices)
+		{
+			auto ds = g_ResourceManager.GetDescriptorSet(slot);
+			THROW_IF(!ds, "Cannot bind null descriptor set!");
+			descSets.push_back(ds);
+		}
+		
+		cmdBuff.bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+			mPipelineLayout, firstSet, descSets.size(), descSets.data(),
+			0, nullptr);
+	}
+
     void Pipeline::BuildPipelineLayout(const std::vector<std::string>& shaderNames)
     {
         std::vector<std::string> shaderPath;
@@ -359,7 +383,8 @@ namespace Engine
             GetBindingsFromShader(shaderPath[i].c_str(), bindings);
         }
 
-        // mBindings = bindings; TODO DELETE
+		// Needed for uniform initialization in materials
+        mBindings = bindings;
 
         // Convert to poolSizes and init the descriptor allocator
         std::vector<vk::DescriptorPoolSize> poolSizes;
@@ -391,6 +416,14 @@ namespace Engine
 			pushConstantRange.size = sizeof(SkyPS);
 		}
 
+		// Copy global sets from temp to this pipeline
+		for (auto i : temp.mGlobalSets)
+		{
+			AddSetIndex(i);
+		}
+
+		std::sort(mSetIndices.begin(), mSetIndices.end());
+
         // Add all descriptor layout sets used by this pipeline
         std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
         descriptorSetLayouts.reserve(1 + mSetIndices.size());
@@ -412,8 +445,8 @@ namespace Engine
     {
         std::ifstream in(file);
         std::string line;
-
-        std::vector<uint32_t> setIndices;
+		// TODO DELETE
+        //std::vector<uint32_t> setIndices;
 
         while (std::getline(in, line))
         {
@@ -447,19 +480,19 @@ namespace Engine
 					THROW("Slots other than 0 are not supported!");
                 }
             }
-			else if (line.find("SLOT") == 0)
+			/*else if (line.find("SLOT") == 0)
 			{
 				uint32_t dest;
 				auto ok = abu::parse(line.begin(), line.end(), Patterns::slotPattern, dest);
 				THROW_IF(ok != abu::Result::SUCCESS, "Slot parsing error at line: {}", line);
 				setIndices.push_back(dest);
-			}
+			}*/
         }
 
-        for (auto i : setIndices)
+        /*for (auto i : setIndices)
         {
             AddSetIndex(i);
-        }
+        }*/
     }
 
     void Pipeline::AddSetIndex(uint32_t index)

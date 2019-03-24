@@ -56,7 +56,8 @@ namespace Engine
 	void RenderpassManager::RenderPasses(vk::Semaphore & waitSem, vk::PipelineStageFlags waitStage, vk::Semaphore & signalSem)
 	{
 		THROW_IF(mPass.empty(), "Render passes not initialized!");
-		std::vector<vk::SubmitInfo> submitInfos(mPass.size());
+		std::vector<vk::SubmitInfo> submitInfos;
+		submitInfos.reserve(mPass.size());
 		
 		if (mPass.size() == 1)
 		{

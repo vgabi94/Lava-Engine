@@ -15,12 +15,16 @@ namespace Engine
     void ResourceManager::Init()
     {
 		CreateDepthBuffer();
+		InitDescriptorAllocatorsAndSets();
+		mFrameConsts.Init();
     }
 
     void ResourceManager::Destroy()
     {
 		DestroyDepthBuffer();
 		DestroyDescriptorAllocators();
+		mLights.Destroy();
+		mFrameConsts.Destroy();
     }
 
 	void ResourceManager::CreateDepthBuffer()
@@ -45,35 +49,18 @@ namespace Engine
 		vmaDestroyImage(GVmaAllocator, mDepthImage, mDepthAlloc);
 	}
 
-    /*vk::DescriptorSet ResourceManager::GetDescriptorSet(uint32_t slot) const
+    vk::DescriptorSet ResourceManager::GetDescriptorSet(uint32_t slot) const
     {
         THROW_IF(slot > 8, "Set slot must not be greater than 8!");
         THROW_IF(slot == 0, "Set slot 0 is reserved for materials!");
         return mDescSets[slot - 1];
-    }*/
+    }
 	
 	vk::DescriptorSetLayout ResourceManager::GetDescriptorSetLayoutAt(uint32_t slot) const
 	{
 		THROW_IF(slot > 8, "Set slot must not be greater than 8!");
 		THROW_IF(slot == 0, "Set slot 0 is reserved for materials!");
 		return mDescLayout[slot - 1];
-	}
-
-	void ResourceManager::WriteDescriptorAtSlot(uint32_t slot)
-	{
-		THROW_IF(slot > 8, "Set slot must not be greater than 8!");
-		THROW_IF(slot == 0, "Set slot 0 is reserved for materials!");
-		
-		uint32_t index = slot - 1;
-		vk::WriteDescriptorSet writeDescSet;
-		writeDescSet.descriptorCount = 1;
-		writeDescSet.descriptorType = vk::DescriptorType::eUniformBuffer;
-		writeDescSet.dstArrayElement = 0;
-		writeDescSet.dstBinding = 0;
-		writeDescSet.dstSet = mDescSets[index];
-		vk::DescriptorBufferInfo bufferInfo(mLights.GetBuffer(), 0, VK_WHOLE_SIZE);
-		writeDescSet.pBufferInfo = &bufferInfo;
-		g_vkDevice.updateDescriptorSets({ writeDescSet }, { });
 	}
 
 	void ResourceManager::InitDescriptorAllocatorsAndSets()
@@ -97,7 +84,7 @@ namespace Engine
 		mDescSets[lightIndex] = mDescAllocators[lightIndex].AllocateDescriptorSet();
 
 		// Frame consts desc allocator
-		constexpr uint32_t frameIndex = LIGHTSOURCE_SLOT - 1;
+		constexpr uint32_t frameIndex = FRAMECONSTS_SLOT - 1;
 		// same pool size and binding as light source
 		mDescLayout[frameIndex] = g_vkDevice.createDescriptorSetLayout(descSetCI);
 		mDescAllocators[frameIndex].Init(poolSizes, mDescLayout[frameIndex]);

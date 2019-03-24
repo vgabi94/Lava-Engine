@@ -23,6 +23,7 @@ namespace Engine
 		bool useTex;
 		float exposure;
 		float gamma;
+		float ambient;
 
 		void GetClearColor(float& r, float& g, float& b) const
 		{
@@ -53,6 +54,7 @@ namespace Engine
         PhysicsWorld* GetPhysicsWorld() const { return mPhysicsWorld; }
 
 		void UploadLightSources() const;
+		void UploadFrameConsts() const;
 
         vk::CommandBuffer GetWorldCommandBuffer(uint32_t index) const 
         { return mCommandBuffer[index]; }

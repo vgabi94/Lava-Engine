@@ -67,7 +67,8 @@ namespace Demo
             VisualEntity blocuri = new VisualEntity(blocuriMesh, material3);
 
             Entity sun = Entity.NewWithComponent(out DirectionalLight sunLight);
-            sunLight.Direction = new Vector3(1f, -1f, 0f);
+            //TODO find true position on sky
+            sunLight.Direction = new Vector3(1f, 0.8f, 0.5f);
 
             var trans = bunny2.GetComponent<Transform>();
             trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
@@ -85,6 +86,7 @@ namespace Demo
             world.skySettings.SetColor(Color.GRAY);
             world.skySettings.gamma = 2.2f;
             world.skySettings.exposure = 16f;
+            world.skySettings.ambient = 0.2f;
 
             var phys = world.PhysicsWorld;
             //phys.Gravity = new Vector3(0f, -2f, 0f);
