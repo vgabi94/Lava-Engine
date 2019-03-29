@@ -1,0 +1,8 @@
+{
+    "vertexInput": "VertexPos",
+    "shaders": ["filtercube.vert", "prefilterenvmap.frag"],
+    "depthCompareOp": "lequal",
+    "depthTestEnable": false,
+    "depthWriteEnable": false,
+    "renderPass" : "prenvPass"
+}

@@ -4,7 +4,7 @@
 #include "common.h"
 
 DECL_POSITION;
-DECL_GLOBALS;
+DECL_OBJ_PS;
 
 IN(0, vec3, position);
 IN(1, vec3, normal);
@@ -16,8 +16,8 @@ OUT(2, vec2, TexCoord);
 
 void main()
 {
-    gl_Position = MVP * vec4(position, 1.0);
-    FragPos = (Model * vec4(position, 1.0)).xyz;
-    Normal = (Model * vec4(normal, 0)).xyz; // because we have uniform scaling and it doesn't affect normals
+    gl_Position = g_Obj.MVP * vec4(position, 1.0);
+    FragPos = (g_Obj.Model * vec4(position, 1.0)).xyz;
+    Normal = (g_Obj.Model * vec4(normal, 0)).xyz; // because we have uniform scaling and it doesn't affect normals
     TexCoord = texcoord;
 }

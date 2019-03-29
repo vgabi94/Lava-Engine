@@ -17,8 +17,8 @@ struct FrameConsts
 {
     int numLights;
     float ambientLight;
-    float padding0;
-    float padding1;
+    float exposure;
+    float gamma;
 };
 
 #endif

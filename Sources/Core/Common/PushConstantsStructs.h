@@ -3,12 +3,11 @@
 
 namespace Engine
 {
-	struct DefaultPS
+	struct ObjPS
 	{
 		Matrix4 MVP;
 		Matrix4 model;
 		Vector3 eyePos;
-		int numLights;
 	};
 
 	struct SkyPS
@@ -16,5 +15,17 @@ namespace Engine
 		Matrix4 ViewProj;
 		float exposure;
 		float gamma;
+	};
+
+	struct IrradPS
+	{
+		float deltaPhi;
+		float deltaTheta;
+	};
+
+	struct PrenvPS
+	{
+		float roughness;
+		unsigned int numSamples;
 	};
 }

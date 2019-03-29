@@ -22,14 +22,14 @@ namespace Engine
         vk::Pipeline pipeline = pipe.mPipeline;
         cmdBuff.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-        DefaultPS pc;
+        ObjPS pc;
         pc.MVP = mMVP;
         pc.model = mModel;
         pc.eyePos = mWorld->mCameraPos;
 
         cmdBuff.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment,
-            0, sizeof(DefaultPS), &pc);
+            0, sizeof(ObjPS), &pc);
 
         mMaterial->Bind(cmdBuff);
 		pipe.BindGlobalDescSets(cmdBuff);

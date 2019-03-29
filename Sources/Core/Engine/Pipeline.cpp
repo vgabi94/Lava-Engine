@@ -408,10 +408,11 @@ namespace Engine
         mDescAllocator.Init(poolSizes, mDescriptorSetLayout);
         
         vk::PushConstantRange pushConstantRange(vk::ShaderStageFlagBits::eVertex
-            | vk::ShaderStageFlagBits::eFragment, 0, sizeof(DefaultPS));
+            | vk::ShaderStageFlagBits::eFragment, 0, sizeof(ObjPS));
 
 		// ADD custom push constants here!
-		if (shaderNames[0].find("sky") != std::string::npos)
+		if (shaderNames[0].find("sky") != std::string::npos
+			|| shaderNames[0].find("filtercube") != std::string::npos)
 		{
 			pushConstantRange.size = sizeof(SkyPS);
 		}

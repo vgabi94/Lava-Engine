@@ -29,7 +29,6 @@ namespace Engine
             };
         }
     };
-    
 
     struct Vertex
     {
@@ -57,7 +56,6 @@ namespace Engine
             };
         }
     };
-
 
     struct VertexExt
     {

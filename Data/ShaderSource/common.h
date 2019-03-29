@@ -12,41 +12,23 @@
 
 #define DECL_POSITION out gl_PerVertex { vec4 gl_Position; }
 
-#define DECL_GLOBALS layout(push_constant) uniform Globals \
+#define DECL_OBJ_PS layout(push_constant) uniform ObjPS \
 {\
     mat4 MVP;\
     mat4 Model;\
-    vec3 EyePos; }
+    vec3 EyePos; } g_Obj
 
-#define DECL_SKY_GLOBALS layout(push_constant) uniform SkyPS \
+#define DECL_SKY_PS layout(push_constant) uniform SkyPS \
 {\
     mat4 ViewProj;\
     float Exposure;\
-    float Gamma; }
+    float Gamma; } g_Sky
 
-// From http://filmicworlds.com/blog/filmic-tonemapping-operators/
-vec3 Uncharted2Tonemap(vec3 color)
-{
-	const float A = 0.15;
-	const float B = 0.50;
-	const float C = 0.10;
-	const float D = 0.20;
-	const float E = 0.02;
-	const float F = 0.30;
-	const float W = 11.2;
-	return ((color*(A*color+C*B)+D*E)/(color*(A*color+B)+D*F))-E/F;
-}
+#define DECL_IRRAD_PS layout(push_constant) uniform IrradPS { float deltaPhi; float deltaTheta; } g_Irrad
 
-vec3 ApplyToneMapping(vec3 color, float exposure)
-{
-    color = Uncharted2Tonemap(color * exposure);
-	color = color * (1.0f / Uncharted2Tonemap(vec3(11.2f)));
-    return color;
-}
+// prefiltered environment map
+#define DECL_PRENV_PS layout(push_constant) uniform PrenvPS { float roughness; uint numSamples; } g_Prenv
 
-vec3 ApplyGammaCorrection(vec3 color, float gamma)
-{
-    return pow(color, vec3(1.0f / gamma));
-}
+#define PI 3.1415926535897932384626433832795
 
 #endif

@@ -208,6 +208,11 @@ extern "C"
         world->mCameraPos = camPos;
     }
 
+	LAVA_API void SetCubeMatrices_Native(Engine::World* world, Engine::Matrix4* matrices)
+	{
+		std::copy(matrices, matrices + 6, world->mCubeMatrices.begin());
+	}
+
 	LAVA_API void SetSkySettings_Native(Engine::World* world, Engine::SkySettings skySettings)
 	{
 		world->mSkySettings = skySettings;

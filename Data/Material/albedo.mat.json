@@ -1,6 +1,0 @@
-{
-    "type": "albedo",
-    "shaders": 
-        ["Data\\Shader\\albedo.frag.spv", 
-        "Data\\Shader\\albedo.vert.spv"]
-}

@@ -1,0 +1,46 @@
+#pragma once
+
+#include "RenderPass.h"
+#include <MemoryPool.h>
+#include <Manager\TextureManager.h>
+#include <Common\Constants.h>
+
+namespace Engine
+{
+	class PrenvPass : public RenderPass
+	{
+	public:
+		void Init() override;
+		void PostShaderLoadInit() override;
+		void Destroy() override;
+
+		void Recreate() override;
+		void Setup() override;
+
+		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages, vk::Semaphore& signalSem) override;
+
+		const Texture& GetPrefEnvMap() const { return mPrefilterdEnvMap; }
+
+		MEM_POOL_DECLARE(PrenvPass);
+
+	private:
+		void _Destroy();
+
+		void CreateRenderPass();
+		void CreateFramebuffers();
+		void CreateCommandPoolAndBuffer();
+		void RecordCommandBuffer();
+
+		void DestroyRenderPass();
+		void DestroyFramebuffers();
+		void DestroyCommandPool();
+
+		uint32_t mCountVBO;
+		struct Material* mMaterial;
+		uint32_t mVBO;
+		Texture mPrefilterdEnvMap;
+		Texture mOffscreen;
+		vk::Format mPrefEnvMapFormat;
+		uint32_t mNumMips;
+	};
+}

@@ -4,7 +4,7 @@
 #include "common.h"
 
 DECL_POSITION;
-DECL_SKY_GLOBALS;
+DECL_SKY_PS;
 
 IN(0, vec3, position);
 OUT(0, vec3, FragPos);
@@ -13,6 +13,6 @@ void main()
 {
     FragPos = position;
     // ViewProj without translation
-    vec4 clipPos = ViewProj * vec4(position, 1.0);
+    vec4 clipPos = g_Sky.ViewProj * vec4(position, 1.0);
     gl_Position = clipPos.xyww;
 }

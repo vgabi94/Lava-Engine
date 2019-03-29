@@ -12,7 +12,7 @@ namespace Engine
     void TextureManager::Init()
     {
         mTexture.reserve(TEXTURE_INIT_CAPACITY);
-        mImageAllocation.reserve(TEXTURE_INIT_CAPACITY);
+        //mImageAllocation.reserve(TEXTURE_INIT_CAPACITY);
         mUploadFence = GDevice.CreateFence();
 
         vk::CommandPoolCreateInfo poolInfo(
@@ -29,9 +29,10 @@ namespace Engine
 
         for (size_t i = 0; i < mTexture.size(); ++i)
         {
-            g_vkDevice.destroySampler(mTexture[i].mSampler);
-            g_vkDevice.destroyImageView(mTexture[i].mImageView);
-            vmaDestroyImage(GVmaAllocator, mTexture[i].mImage, mImageAllocation[i]);
+            //g_vkDevice.destroySampler(mTexture[i].mSampler);
+            //g_vkDevice.destroyImageView(mTexture[i].mImageView);
+            //vmaDestroyImage(GVmaAllocator, mTexture[i].mImage, mImageAllocation[i]);
+			mTexture[i].Destroy();
         }
 
         g_vkDevice.destroyCommandPool(mCommandPool);
@@ -181,7 +182,7 @@ namespace Engine
         return image;
     }
 
-	vk::Image TextureManager::CreateCubeMap(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+	vk::Image TextureManager::CreateCubeMap(vk::Extent3D extent, uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
 		VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 		VmaAllocation & vmaAllocation, VmaAllocationInfo * vmaAllocationInfo,
 		vk::Format format)
@@ -191,7 +192,7 @@ namespace Engine
 
 		vk::ImageCreateInfo imageCreateInfo(vk::ImageCreateFlagBits::eCubeCompatible,
 			vk::ImageType::e2D,
-			format, extent, 1, 6,
+			format, extent, mipLevels, 6,
 			vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, imageUsageFlags,
 			vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 
@@ -213,14 +214,14 @@ namespace Engine
 		return image;
 	}
 
-	vk::ImageView TextureManager::CreateCubeMapView(vk::Image image, vk::Format format, vk::ImageAspectFlags aspectFlags)
+	vk::ImageView TextureManager::CreateCubeMapView(vk::Image image, uint32_t mipLevels, vk::Format format, vk::ImageAspectFlags aspectFlags)
 	{
 		vk::ImageViewCreateInfo imageViewCI({},
 			image,
 			vk::ImageViewType::eCube,
 			format,
 			{},
-			vk::ImageSubresourceRange(aspectFlags, 0, 1, 0, 6)
+			vk::ImageSubresourceRange(aspectFlags, 0, mipLevels, 0, 6)
 		);
 
 		return g_vkDevice.createImageView(imageViewCI);
@@ -253,10 +254,11 @@ namespace Engine
 
         tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR8G8B8A8Unorm);
         tex.mSampler = CreateSampler();
+		tex.mImageAllocation = imageAllocation;
 
         uint32_t index = mTexture.size();
         mTexture.push_back(tex);
-        mImageAllocation.push_back(imageAllocation);
+        //mImageAllocation.push_back(imageAllocation);
 
         UploadRequest req;
         req.imageIndex = index;
@@ -308,10 +310,11 @@ namespace Engine
 
 		tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR32G32B32A32Sfloat);
 		tex.mSampler = CreateHDRSampler();
+		tex.mImageAllocation = imageAllocation;
 
 		uint32_t index = mTexture.size();
 		mTexture.push_back(tex);
-		mImageAllocation.push_back(imageAllocation);
+		//mImageAllocation.push_back(imageAllocation);
 
 		UploadRequest req;
 		req.imageIndex = index;
@@ -323,12 +326,10 @@ namespace Engine
 	}
 
     void TextureManager::TransitionImageLayout(vk::Image image, vk::Format format,
-        vk::ImageLayout oldLayout, vk::ImageLayout newLayout)
+        vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageSubresourceRange imageRange)
     {
         vk::AccessFlags srcAccessFlags = {};
         vk::AccessFlags dstAccessFlags = {};
-        vk::ImageSubresourceRange imageRange = {};
-        imageRange.layerCount = imageRange.levelCount = 1;
         vk::PipelineStageFlags srcStage = {};
         vk::PipelineStageFlags dstStage = {};
 
@@ -403,6 +404,80 @@ namespace Engine
         g_vkDevice.freeCommandBuffers(mCommandPool, { buffer });
     }
 
+	void TextureManager::TransitionImageLayout(vk::CommandBuffer cmdBuf, vk::Image image,
+		vk::ImageLayout oldLayout, vk::ImageLayout newLayout, vk::ImageSubresourceRange imageRange)
+	{
+		vk::AccessFlags srcAccessFlags = {};
+		vk::AccessFlags dstAccessFlags = {};
+		vk::PipelineStageFlags srcStage = {};
+		vk::PipelineStageFlags dstStage = {};
+
+		if (oldLayout == vk::ImageLayout::eUndefined
+			&& newLayout == vk::ImageLayout::eTransferDstOptimal)
+		{
+			dstAccessFlags = vk::AccessFlagBits::eTransferWrite;
+
+			srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			dstStage = vk::PipelineStageFlagBits::eTransfer;
+		}
+		else if (oldLayout == vk::ImageLayout::eTransferDstOptimal
+			&& newLayout == vk::ImageLayout::eShaderReadOnlyOptimal)
+		{
+			srcAccessFlags = vk::AccessFlagBits::eTransferRead;
+			dstAccessFlags = vk::AccessFlagBits::eShaderRead;
+
+			srcStage = vk::PipelineStageFlagBits::eTransfer;
+			dstStage = vk::PipelineStageFlagBits::eFragmentShader;
+		}
+		else if (oldLayout == vk::ImageLayout::eUndefined
+			&& newLayout == vk::ImageLayout::eDepthStencilAttachmentOptimal)
+		{
+			dstAccessFlags = vk::AccessFlagBits::eDepthStencilAttachmentRead |
+				vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+
+			srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
+			dstStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+		}
+		else
+		{
+			throw std::invalid_argument("Unsupported layout transition!");
+		}
+
+		vk::ImageMemoryBarrier imageBarrier(srcAccessFlags, dstAccessFlags,
+			oldLayout, newLayout, 0, 0, image, imageRange);
+
+		cmdBuf.pipelineBarrier(srcStage, dstStage, {}, {}, {}, { imageBarrier });
+	}
+
+	Texture TextureManager::CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth,
+		vk::ImageUsageFlags imageUsageFlags, VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+		vk::Format format, vk::ImageAspectFlags aspectFlags)
+	{
+		Texture tex;
+		tex.mWidth = width;
+		tex.mHeight = height;
+		tex.mDepth = depth;
+		tex.mImage = CreateImage2D(vk::Extent3D(width, height, depth), imageUsageFlags, vmaMemoryUsage, vmaAllocationFlags,
+			tex.mImageAllocation, nullptr, format);
+		tex.mImageView = CreateImageView2D(tex.mImage, format, aspectFlags);
+		return tex;
+	}
+
+	Texture TextureManager::CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
+		uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
+		VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+		vk::Format format, vk::ImageAspectFlags aspectFlags)
+	{
+		Texture tex;
+		tex.mWidth = width;
+		tex.mHeight = height;
+		tex.mDepth = depth;
+		tex.mImage = CreateCubeMap(vk::Extent3D(width, height, depth), mipLevels, imageUsageFlags, vmaMemoryUsage, vmaAllocationFlags,
+			tex.mImageAllocation, nullptr, format);
+		tex.mImageView = CreateCubeMapView(tex.mImage, mipLevels, format, aspectFlags);
+		return tex;
+	}
+
     uint32_t TextureManager::CreateTextureFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
     {
         Texture tex;
@@ -431,10 +506,11 @@ namespace Engine
 
         tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR8G8B8A8Unorm);
         tex.mSampler = CreateSampler();
+		tex.mImageAllocation = imageAllocation;
 
         uint32_t index = mTexture.size();
         mTexture.push_back(tex);
-        mImageAllocation.push_back(imageAllocation);
+        //mImageAllocation.push_back(imageAllocation);
 
         UploadRequest req;
         req.imageIndex = index;
@@ -478,6 +554,23 @@ namespace Engine
 		return g_vkDevice.createSampler(samplerCI);
 	}
 
+	vk::Sampler TextureManager::CreateSamplerPrenv(uint32_t numMips)
+	{
+		vk::SamplerCreateInfo samplerCI({},
+			vk::Filter::eLinear,
+			vk::Filter::eLinear,
+			vk::SamplerMipmapMode::eLinear,
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			vk::SamplerAddressMode::eClampToEdge,
+			0.0f, VK_FALSE, 0.0f, VK_FALSE,
+			vk::CompareOp::eAlways, 0.0f, numMips,
+			vk::BorderColor::eFloatOpaqueWhite
+		);
+
+		return g_vkDevice.createSampler(samplerCI);
+	}
+
 	vk::Sampler TextureManager::CreateHDRSampler()
 	{
 		vk::SamplerCreateInfo samplerCI({},
@@ -492,6 +585,13 @@ namespace Engine
 		);
 
 		return g_vkDevice.createSampler(samplerCI);
+	}
+	
+	void Texture::Destroy()
+	{
+		g_vkDevice.destroySampler(mSampler);
+		g_vkDevice.destroyImageView(mImageView);
+		vmaDestroyImage(GVmaAllocator, mImage, mImageAllocation);
 	}
 }
 

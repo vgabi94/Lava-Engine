@@ -66,6 +66,7 @@ namespace Engine
 		SkySettings mSkySettings;
 		Matrix4 mSkyViewProj;
 		std::vector<LightInfo> mLightInfo;
+		std::array<Matrix4, 6> mCubeMatrices;
     private:
         MEM_POOL_DECLARE(World);
         void DestroyEntities();

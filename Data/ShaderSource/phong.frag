@@ -5,7 +5,7 @@
 #include "lights.h"
 #include "globalbuffers.h"
 
-DECL_GLOBALS;
+DECL_OBJ_PS;
 
 IN(0, vec3, FragPos);
 IN(1, vec3, Normal);
@@ -20,7 +20,7 @@ void main()
     const float specularExponent = 64;
     const float ambient = 0.5;
 
-    vec3 eyePos = EyePos;
+    vec3 eyePos = g_Obj.EyePos;
     vec3 color = texture(Albedo, TexCoord).rgb;
     vec3 normal = normalize(Normal);
     vec3 viewDir = normalize(eyePos - FragPos);

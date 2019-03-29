@@ -87,6 +87,8 @@ namespace Demo
             world.skySettings.gamma = 2.2f;
             world.skySettings.exposure = 16f;
             world.skySettings.ambient = 0.2f;
+            world.skySettings.hdrTex = skyTex;
+            world.skySettings.hdrEnv = skyEnv;
 
             var phys = world.PhysicsWorld;
             //phys.Gravity = new Vector3(0f, -2f, 0f);

@@ -60,6 +60,8 @@ namespace Engine
         g_TextureManager.ExecuteOperations();
 
         g_WorldManager.UpdatePhysicsWorld();
+
+		// TODO: RenderPass one time only passes!
         
         GSwapchain.Update();
     }

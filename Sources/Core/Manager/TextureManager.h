@@ -11,12 +11,22 @@ namespace Engine
 {
     struct Texture
     {
+		friend class TextureManager;
+
         int mWidth, mHeight;
         int mDepth;
         int mChannels;
         vk::Image mImage;
         vk::Sampler mSampler;
         vk::ImageView mImageView;
+	
+		void Destroy();
+		
+		void* GetMappedBit() { if (mVmaAllocationInfo) return mVmaAllocationInfo->pMappedData; else return nullptr; }
+	
+	private:
+		VmaAllocation mImageAllocation;
+		VmaAllocationInfo* mVmaAllocationInfo;
     };
 
     class TextureManager
@@ -34,12 +44,12 @@ namespace Engine
             VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo,
             vk::Format format = vk::Format::eR8G8B8A8Unorm);
 
-		vk::Image CreateCubeMap(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+		vk::Image CreateCubeMap(vk::Extent3D extent, uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
 			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 			VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo,
 			vk::Format format = vk::Format::eR8G8B8A8Unorm);
 
-		vk::ImageView CreateCubeMapView(vk::Image image,
+		vk::ImageView CreateCubeMapView(vk::Image image, uint32_t mipLevels,
 			vk::Format format = vk::Format::eR8G8B8A8Unorm,
 			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
         
@@ -48,7 +58,26 @@ namespace Engine
             vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
         void TransitionImageLayout(vk::Image image, vk::Format format,
-            vk::ImageLayout initialLayout, vk::ImageLayout finalLayout);
+            vk::ImageLayout initialLayout, vk::ImageLayout finalLayout,
+			vk::ImageSubresourceRange imageRange =
+			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+
+		void TransitionImageLayout(vk::CommandBuffer cmdBuf, vk::Image image,
+			vk::ImageLayout initialLayout, vk::ImageLayout finalLayout,
+			vk::ImageSubresourceRange imageRange =
+			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
+
+		// ---- Create texture functions ---- //
+		Texture CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth, vk::ImageUsageFlags imageUsageFlags,
+			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
+
+		Texture CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
+			uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
+			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
+			vk::Format format = vk::Format::eR8G8B8A8Unorm,
+			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
 		// ---- Loading functions ---- //
         uint32_t LoadTex2D(const char* path);
@@ -63,6 +92,7 @@ namespace Engine
 		// ---- Samplers ---- //
         vk::Sampler CreateSampler();
 		vk::Sampler CreateSamplerCube();
+		vk::Sampler CreateSamplerPrenv(uint32_t numMips);
 		vk::Sampler CreateHDRSampler();
 		// ------------------ //
 
@@ -89,7 +119,7 @@ namespace Engine
         vk::CommandPool mCommandPool;
         vk::CommandBuffer mTransferCmdBuffer;
         vk::Fence mUploadFence;
-        std::vector<VmaAllocation> mImageAllocation;
+        //std::vector<VmaAllocation> mImageAllocation;
     };
 
     extern TextureManager g_TextureManager;
