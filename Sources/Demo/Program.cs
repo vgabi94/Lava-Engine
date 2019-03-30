@@ -80,7 +80,7 @@ namespace Demo
             camEnt.AddComponent<CameraController>();
             Camera.Main = camera;
             camera.Position = new Vector3(0f, 0f, 20f);
-            camera.FarPlane = 50f;
+            camera.FarPlane = 512f;
 
             World world = WorldManager.CreateWorld();
             world.skySettings.SetColor(Color.GRAY);
@@ -108,15 +108,19 @@ namespace Demo
             world.AddEntity(blocuri);
             world.AddEntity(sun);
 
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 10; i++)
             {
                 StaticMesh m = new StaticMesh(Settings.ModelsDirPath + "\\cubplayer.obj");
                 Material mat = new Material("phong");
                 mat.SetUniform(0, tex);
                 VisualEntity visual = new VisualEntity(m, mat);
-                visual.Transform.Position = Random.UnitSphere * 100;
+                visual.Transform.Position = Random.UnitSphere * 10;
                 world.AddEntity(visual);
             }
+
+            Entity iblEnt = Entity.NewWithComponent(out IBLProbe iblProbe);
+            iblProbe.Position = Vector3.Zero;
+            world.AddEntity(iblEnt);
 
             EventManager.UpdateEvent += Update;
         }

@@ -3,6 +3,7 @@
 #include "Entity.h"
 #include "PhysicsWorld.h"
 #include <Common\LightInfo.h>
+#include <Common\WorldStructs.h>
 #include "buffers.h"
 
 #define WORLD_DIRTY 0x3
@@ -15,24 +16,6 @@ namespace otr
 
 namespace Engine
 {
-	struct SkySettings
-	{
-		Vector3 color;
-		unsigned int hdrTex;
-		unsigned int hdrEnv;
-		bool useTex;
-		float exposure;
-		float gamma;
-		float ambient;
-
-		void GetClearColor(float& r, float& g, float& b) const
-		{
-			r = color.x;
-			g = color.y;
-			b = color.z;
-		}
-	};
-
     // Represents the world of drawable entities
     class World
     {
@@ -59,6 +42,15 @@ namespace Engine
         vk::CommandBuffer GetWorldCommandBuffer(uint32_t index) const 
         { return mCommandBuffer[index]; }
 
+		IBLProbe GetNearestIBLProbe(Vector3 position)
+		{
+			THROW_IF(mIBLProbes.empty(), "There are no IBL probes in the current world!");
+			// for now just return the first element
+			return mIBLProbes[0];
+		}
+
+		void AddIBLProbeInfo(const IBLProbeInfo& info);
+
         uint8_t mDirty;
         Vector3 mCameraPos;
         Vector3 mViewBoundingMin;
@@ -66,18 +58,18 @@ namespace Engine
 		SkySettings mSkySettings;
 		Matrix4 mSkyViewProj;
 		std::vector<LightInfo> mLightInfo;
-		std::array<Matrix4, 6> mCubeMatrices;
     private:
         MEM_POOL_DECLARE(World);
         void DestroyEntities();
+		void UpdatePhysicsWorld();
 
         std::vector<vk::CommandBuffer> mCommandBuffer;
         std::vector<Entity*> mEntityList;
         otr::Octree<Entity>* mVisibleEntities;
-        vk::CommandPool mCommandPool;
 
+        vk::CommandPool mCommandPool;
         PhysicsWorld* mPhysicsWorld;
 
-        void UpdatePhysicsWorld();
+		std::vector<IBLProbe> mIBLProbes;
     };
 }

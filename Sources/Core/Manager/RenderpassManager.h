@@ -30,7 +30,7 @@ namespace Engine
         void Destroy();
 
         template<typename T>
-        RenderPass* AddPass(const std::string& name)
+        T* AddPass(const std::string& name)
         {
 			THROW_IF(mPassMap.find(name) != mPassMap.end(), "RenderPass already added: {0}", name.c_str());
 
@@ -38,8 +38,22 @@ namespace Engine
             pass->Init();
             mPass.push_back(pass);
 			mPassMap[name] = pass;
-            return pass;
+            return static_cast<T*>(pass);
         }
+
+		template<typename T>
+		T* AddPassTask(uint32_t& index)
+		{
+			RenderPass* pass = T::Allocate();
+			pass->Init();
+			if (mPostShader) pass->PostShaderLoadInit();
+			index = mPassTask.size();
+			mPassTask.push_back(pass);
+			return static_cast<T*>(pass);
+		}
+
+		template<typename T = RenderPass>
+		T* GetPassTaskAt(uint32_t index) const { return reinterpret_cast<T*>(mPassTask[index]); }
    
 		template<typename T = RenderPass>
         T* GetPassAt(uint32_t index) const { return reinterpret_cast<T*>(mPass[index]); }
@@ -62,8 +76,13 @@ namespace Engine
 		void DestroyFences();
 
         std::vector<RenderPass*> mPass;
+		// These are task passes which are not totally controlled by these manager.
+		// They can be used for example to generate stuff on the gpu.
+        std::vector<RenderPass*> mPassTask;
         std::unordered_map<std::string, RenderPass*> mPassMap;
 		std::vector<vk::Fence> mFence;
+
+		bool mPostShader;
     };
 
     extern RenderpassManager g_RenderpassManager;

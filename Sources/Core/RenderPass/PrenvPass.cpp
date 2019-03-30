@@ -18,6 +18,7 @@ namespace Engine
 	void PrenvPass::Init()
 	{
 		RenderPass::Init();
+		// Used for renderpass synchronization 
 		mPipelineStageFlags = vk::PipelineStageFlagBits::eColorAttachmentOutput;
 		CreateRenderPass();
 		CreateFramebuffers();
@@ -76,6 +77,40 @@ namespace Engine
 			mWaitStages.data(),
 			1, &mCommandBuffer[0],
 			1, &signalSem
+		);
+		return submitInfo;
+	}
+
+	vk::SubmitInfo PrenvPass::GetSubmitInfo(vk::Semaphore & signalSem)
+	{
+		vk::SubmitInfo submitInfo(
+			0, nullptr,
+			mWaitStages.data(),
+			1, &mCommandBuffer[0],
+			1, &signalSem
+		);
+		return submitInfo;
+	}
+
+	vk::SubmitInfo PrenvPass::GetSubmitInfo(vk::Semaphore & waitSem, vk::PipelineStageFlags waitStage)
+	{
+		std::array<vk::PipelineStageFlags, 1> waitStages{ waitStage };
+		vk::SubmitInfo submitInfo(
+			1, &waitSem,
+			waitStages.data(),
+			1, &mCommandBuffer[0],
+			0, nullptr
+		);
+		return submitInfo;
+	}
+
+	vk::SubmitInfo PrenvPass::GetSubmitInfo()
+	{
+		vk::SubmitInfo submitInfo(
+			0, nullptr,
+			nullptr,
+			1, &mCommandBuffer[0],
+			0, nullptr
 		);
 		return submitInfo;
 	}
@@ -170,6 +205,7 @@ namespace Engine
 	void PrenvPass::RecordCommandBuffer()
 	{
 		vk::CommandBuffer& cmdBuf = mCommandBuffer[0];
+		uint32_t dim = mOffscreen.mWidth;
 
 		vk::CommandBufferBeginInfo beginInfo(
 			vk::CommandBufferUsageFlagBits::eSimultaneousUse |
@@ -184,46 +220,95 @@ namespace Engine
 		vk::RenderPassBeginInfo renderPassInfo(
 			mRenderPass,
 			mFramebuffer[0],
-			vk::Rect2D({ 0, 0 }, { mOffscreen.mWidth, mOffscreen.mHeight }),
+			vk::Rect2D({ 0, 0 }, { dim, dim }),
 			1,
 			clearValues);
 
-		cmdBuf.beginRenderPass(renderPassInfo,
-			vk::SubpassContents::eInline);
-
-		vk::Viewport viewport(0.f, 0.f, (float)mOffscreen.mWidth, (float)mOffscreen.mHeight, 0.f, 1.f);
+		vk::Viewport viewport(0.f, 0.f, (float)dim, (float)dim, 0.f, 1.f);
 		cmdBuf.setViewport(0, { viewport });
 
-		vk::Rect2D scissor({}, { mOffscreen.mWidth, mOffscreen.mHeight });
+		vk::Rect2D scissor({}, { dim, dim });
 		cmdBuf.setScissor(0, { scissor });
 
-		vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mNumMips, 0, 6);
-		// We will copy offscreen result intro cubeMap so prepare it for transfer dst
-		g_TextureManager.TransitionImageLayout(cmdBuf, mPrefilterdEnvMap.mImage,
-			vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, imageRange);
+		{ // Prepare prenv cube map for transfer operation
+			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mNumMips, 0, 6);
+			g_TextureManager.TransitionImageLayout(cmdBuf, mPrefilterdEnvMap.mImage,
+				vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, imageRange);
+		}
 
 		const Pipeline& pipe = PipelineOfType(mMaterial->mPipeType);
+		const vk::Pipeline& pipeline = pipe.mPipeline;
 
-		// TODO delete hdrEnv
-		mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrEnv);
+		mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrTex);
 
-		vk::Pipeline pipeline = pipe.mPipeline;
-		cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		SkyPS skyPS;
+		skyPS.exposure = CurrentWorld->mSkySettings.exposure;
+		skyPS.gamma = CurrentWorld->mSkySettings.gamma;
 
-		SkyPS pc;
-		pc.ViewProj = CurrentWorld->mSkyViewProj;
-		pc.exposure = CurrentWorld->mSkySettings.exposure;
-		pc.gamma = CurrentWorld->mSkySettings.gamma;
+		PrenvPS prenvPS;
+		prenvPS.numSamples = 32u;
 
-		cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex
-			| vk::ShaderStageFlagBits::eFragment,
-			0, sizeof(SkyPS), &pc);
+		for (uint32_t m = 0; m < mNumMips; m++)
+		{
+			prenvPS.roughness = (float)m / (float)(mNumMips - 1);
+			for (uint32_t f = 0; f < 6; f++)
+			{
+				viewport.width = static_cast<float>(dim * std::pow(0.5f, m));
+				viewport.height = static_cast<float>(dim * std::pow(0.5f, m));
+				cmdBuf.setViewport(0, { viewport });
 
-		mMaterial->Bind(cmdBuf);
+				cmdBuf.beginRenderPass(renderPassInfo,
+					vk::SubpassContents::eInline);
 
-		// TODO render all cube faces
+				skyPS.ViewProj = mCubeMatrices[f];
 
-		cmdBuf.endRenderPass();
+				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(SkyPS), &skyPS);
+				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS), &prenvPS);
+
+				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+
+				mMaterial->Bind(cmdBuf);
+
+				vk::Buffer vbo = BufferAt(mVBO);
+				vk::DeviceSize vertOffset = 0;
+
+				cmdBuf.bindVertexBuffers(0, 1, &vbo, &vertOffset);
+
+				cmdBuf.draw(mCountVBO, 1, 0, 0);
+
+				cmdBuf.endRenderPass();
+
+				{ // Prepare offscreen image for transfer into cube face
+					vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+					g_TextureManager.TransitionImageLayout(cmdBuf, mOffscreen.mImage, vk::ImageLayout::eColorAttachmentOptimal,
+						vk::ImageLayout::eTransferSrcOptimal, imageRange);
+				}
+
+				vk::ImageCopy copyRegion = vk::ImageCopy(
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, 0, 0, 1),
+					vk::Offset3D(0, 0, 0),
+					vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, m, f, 1),
+					vk::Offset3D(0, 0, 0),
+					vk::Extent3D((uint32_t)viewport.width, (uint32_t)viewport.height, 1)
+				);
+
+				cmdBuf.copyImage(mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
+					mPrefilterdEnvMap.mImage, vk::ImageLayout::eTransferDstOptimal,
+					1, &copyRegion);
+
+				{ // Transfer offscreen image back to color attach optimal
+					vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
+					g_TextureManager.TransitionImageLayout(cmdBuf, mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
+						vk::ImageLayout::eColorAttachmentOptimal, imageRange);
+				}
+			}
+		}
+
+		{ // Prepare prenv cube map for shader operations
+			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mNumMips, 0, 6);
+			g_TextureManager.TransitionImageLayout(cmdBuf, mPrefilterdEnvMap.mImage,
+				vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, imageRange);
+		}
 
 		cmdBuf.end();
 	}

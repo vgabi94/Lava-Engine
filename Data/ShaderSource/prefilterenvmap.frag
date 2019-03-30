@@ -9,17 +9,9 @@ layout (location = 0) out vec4 outColor;
 
 IN(0, vec3, inPos);
 OUT(0, vec4, outColor);
-// TODO irradiance map !!!
-// UNIFORM0(0, sampler2D, samplerEnv);
 
-// const vec2 invAtan = vec2(0.1591, 0.3183);
-// vec2 SampleSphericalMap(vec3 v)
-// {
-//     vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
-//     uv *= invAtan;
-//     uv += 0.5;
-//     return uv;
-// }
+// TODO this must change to sampler2D too
+UNIFORM0(0, samplerCube, samplerEnv);
 
 DECL_PRENV_PS;
 

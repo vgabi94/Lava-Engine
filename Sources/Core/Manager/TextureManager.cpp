@@ -231,7 +231,7 @@ namespace Engine
     {
         Texture tex;
         tex.mDepth = 1;
-        stbi_uc* pixels = stbi_load(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(path, (int*)&tex.mWidth, (int*)&tex.mHeight, (int*)&tex.mChannels, STBI_rgb_alpha);
         vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha;
         assert(pixels);
         
@@ -285,9 +285,9 @@ namespace Engine
 
 	uint32_t TextureManager::LoadTexHDR(const char* path)
 	{
-		Texture tex;
+		Texture tex; // TODO add mipmap generation
 		tex.mDepth = 1;
-		float* pixels = stbi_loadf(path, &tex.mWidth, &tex.mHeight, &tex.mChannels, STBI_rgb_alpha);
+		float* pixels = stbi_loadf(path, (int*)&tex.mWidth, (int*)&tex.mHeight, (int*)&tex.mChannels, STBI_rgb_alpha);
 		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha * sizeof(float);
 		assert(pixels);
 

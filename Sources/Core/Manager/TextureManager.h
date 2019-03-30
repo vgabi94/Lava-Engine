@@ -1,34 +1,11 @@
 #pragma once
-
-#include <vulkan\vulkan.hpp>
-#include <vector>
-#include <vk_mem_alloc.h>
+#include <Engine\Texture.h>
 
 #define GTextureManager Engine::g_TextureManager
 #define TextureAt(i) g_TextureManager.GetTexture(i);
 
 namespace Engine
 {
-    struct Texture
-    {
-		friend class TextureManager;
-
-        int mWidth, mHeight;
-        int mDepth;
-        int mChannels;
-        vk::Image mImage;
-        vk::Sampler mSampler;
-        vk::ImageView mImageView;
-	
-		void Destroy();
-		
-		void* GetMappedBit() { if (mVmaAllocationInfo) return mVmaAllocationInfo->pMappedData; else return nullptr; }
-	
-	private:
-		VmaAllocation mImageAllocation;
-		VmaAllocationInfo* mVmaAllocationInfo;
-    };
-
     class TextureManager
     {
         static constexpr uint32_t TEXTURE_INIT_CAPACITY = 16;

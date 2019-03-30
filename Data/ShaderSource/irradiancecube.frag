@@ -7,7 +7,16 @@
 IN(0, vec3, inPos);
 OUT(0, vec4, outColor);
 
-UNIFORM0(0, samplerCube, samplerEnv);
+UNIFORM0(0, sampler2D, samplerEnv);
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
 
 DECL_IRRAD_PS;
 
@@ -27,7 +36,9 @@ void main()
 		for (float theta = 0.0; theta < HALF_PI; theta += g_Irrad.deltaTheta) {
 			vec3 tempVec = cos(phi) * right + sin(phi) * up;
 			vec3 sampleVector = cos(theta) * N + sin(theta) * tempVec;
-			color += texture(samplerEnv, sampleVector).rgb * cos(theta) * sin(theta);
+			vec2 uv = SampleSphericalMap(normalize(sampleVector));
+			uv.y = 1.0 - uv.y;
+			color += texture(samplerEnv, uv).rgb * cos(theta) * sin(theta);
 			sampleCount++;
 		}
 	}

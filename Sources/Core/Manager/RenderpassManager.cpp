@@ -10,7 +10,9 @@ namespace Engine
     void RenderpassManager::Init()
     {
         mPass.reserve(RENDERPASS_CAPACITY);
+        mPassTask.reserve(RENDERPASS_CAPACITY);
 		mPassMap.reserve(RENDERPASS_CAPACITY);
+		mPostShader = false;
         LOG_INFO("[LOG] RenderpassManager init\n");
     }
 
@@ -20,6 +22,7 @@ namespace Engine
 		{
 			pass->PostShaderLoadInit();
 		}
+		mPostShader = true;
 	}
 
 	void RenderpassManager::PostSwapchainInit()
@@ -34,6 +37,10 @@ namespace Engine
         {
             pass->Destroy();
         }
+		for (auto pass : mPassTask)
+		{
+			pass->Destroy();
+		}
 		DestroyFences();
         LOG_INFO("[LOG] RenderpassManager destroy\n");
     }

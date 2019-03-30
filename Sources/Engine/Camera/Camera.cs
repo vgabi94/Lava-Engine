@@ -93,6 +93,17 @@ namespace Lava.Engine
 
         public static Camera Main { get; set; }
 
+        /// <summary>
+        /// No Vulkan clip correction applied
+        /// </summary>
+        public Matrix4 ViewProjOpenGL
+        {
+            get
+            {
+                return Projection * View;
+            }
+        }
+
         public Matrix4 ViewProjection
         {
             get

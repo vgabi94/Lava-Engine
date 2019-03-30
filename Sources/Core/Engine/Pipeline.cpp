@@ -406,15 +406,24 @@ namespace Engine
         mDescriptorSetLayout = g_vkDevice.createDescriptorSetLayout(descSetCI);
 
         mDescAllocator.Init(poolSizes, mDescriptorSetLayout);
+
+		std::vector<vk::PushConstantRange> pushRanges;
         
         vk::PushConstantRange pushConstantRange(vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment, 0, sizeof(ObjPS));
+		pushRanges.push_back(pushConstantRange);
 
 		// ADD custom push constants here!
-		if (shaderNames[0].find("sky") != std::string::npos
-			|| shaderNames[0].find("filtercube") != std::string::npos)
+		if (shaderNames[0].find("sky") != std::string::npos)
 		{
-			pushConstantRange.size = sizeof(SkyPS);
+			pushRanges[0].size = sizeof(SkyPS);
+		}
+
+		if (shaderNames[0].find("filtercube") != std::string::npos)
+		{
+			pushRanges.clear(); // we don't need ObjPS here
+			pushRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(SkyPS)));
+			pushRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS)));
 		}
 
 		// Copy global sets from temp to this pipeline
@@ -438,7 +447,7 @@ namespace Engine
         vk::PipelineLayoutCreateInfo pipelineLayoutInfo({},
             static_cast<uint32_t>(descriptorSetLayouts.size()),
             descriptorSetLayouts.data(),
-            1, &pushConstantRange);
+            pushRanges.size(), pushRanges.data());
         mPipelineLayout = g_vkDevice.createPipelineLayout(pipelineLayoutInfo);
     }
 

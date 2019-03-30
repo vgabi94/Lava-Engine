@@ -4,11 +4,14 @@
 #include <MemoryPool.h>
 #include <Manager\TextureManager.h>
 #include <Common\Constants.h>
+#include <Common\MathTypes.h>
 
 namespace Engine
 {
 	class PrenvPass : public RenderPass
 	{
+		friend class ResourceManager;
+
 	public:
 		void Init() override;
 		void PostShaderLoadInit() override;
@@ -18,6 +21,9 @@ namespace Engine
 		void Setup() override;
 
 		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages, vk::Semaphore& signalSem) override;
+		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& signalSem) override;
+		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages) override;
+		vk::SubmitInfo GetSubmitInfo() override;
 
 		const Texture& GetPrefEnvMap() const { return mPrefilterdEnvMap; }
 
@@ -42,5 +48,6 @@ namespace Engine
 		Texture mOffscreen;
 		vk::Format mPrefEnvMapFormat;
 		uint32_t mNumMips;
+		std::array<Matrix4, 6> mCubeMatrices;
 	};
 }

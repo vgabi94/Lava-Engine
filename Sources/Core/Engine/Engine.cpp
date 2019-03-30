@@ -61,7 +61,7 @@ namespace Engine
 
         g_WorldManager.UpdatePhysicsWorld();
 
-		// TODO: RenderPass one time only passes!
+		g_ResourceManager.ExecuteIBLPasses();
         
         GSwapchain.Update();
     }

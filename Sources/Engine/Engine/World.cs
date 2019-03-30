@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using Lava.Mathematics;
 
 namespace Lava.Engine
 {
@@ -16,16 +17,19 @@ namespace Lava.Engine
         private static extern void AddLightInfo_Native(IntPtr world, LightInfo li);
 
         [DllImport("LavaCore.dll")]
-        private static extern void SetCameraPos_Native(IntPtr world, Mathematics.Vector3 camPos);
+        private static extern void SetCameraPos_Native(IntPtr world, Vector3 camPos);
+
+        [DllImport("LavaCore.dll")]
+        private static extern void AddIBLProbeInfo_Native(IntPtr world, IBLProbeInfo iblInfo);
 
         [DllImport("LavaCore.dll")]
         private static extern void SetSkySettings_Native(IntPtr world, SkySettings skySettings);
 
         [DllImport("LavaCore.dll")]
-        private static extern void SetSkyViewProj_Native(IntPtr world, Mathematics.Matrix4 viewProj);
+        private static extern void SetSkyViewProj_Native(IntPtr world, Matrix4 viewProj);
 
         [DllImport("LavaCore.dll")]
-        private static extern void SetViewBounds_Native(IntPtr world, Mathematics.Vector3 bmin, Mathematics.Vector3 bmax);
+        private static extern void SetViewBounds_Native(IntPtr world, Vector3 bmin, Vector3 bmax);
 
         [DllImport("LavaCore.dll")]
         private static extern IntPtr GetPhysicsWorld_Native(IntPtr world);
@@ -48,6 +52,12 @@ namespace Lava.Engine
             {
                 AddLightInfo_Native(NativePtr, lightComponent.ToLightInfo());
             }
+
+            IBLProbe ibl = ent.GetComponent<IBLProbe>();
+            if (ibl != null)
+            {
+                AddIBLProbeInfo_Native(NativePtr, ibl.info);
+            }
             
             entities.Add(ent);
             ent.World = this;
@@ -68,8 +78,8 @@ namespace Lava.Engine
                 //    - Camera.Main.Up * Camera.Main.FarPlane / 2f;
                 //Mathf.Vector3 bmax = Camera.Main.Position + Camera.Main.Right * Camera.Main.FarPlane / 2f
                 //    + Camera.Main.Up * Camera.Main.FarPlane / 2f + Camera.Main.Forward * Camera.Main.FarPlane;
-                Mathematics.Vector3 bmin = Camera.Main.Position - new Mathematics.Vector3(Camera.Main.FarPlane + 5f);
-                Mathematics.Vector3 bmax = Camera.Main.Position + new Mathematics.Vector3(Camera.Main.FarPlane + 5f);
+                Vector3 bmin = Camera.Main.Position - new Vector3(Camera.Main.FarPlane + 5f);
+                Vector3 bmax = Camera.Main.Position + new Vector3(Camera.Main.FarPlane + 5f);
                 SetViewBounds_Native(NativePtr, bmin, bmax);
                 SetSkyViewProj_Native(NativePtr, Camera.Main.SkyViewProj);
                 SetSkySettings_Native(NativePtr, skySettings);

@@ -65,6 +65,23 @@ namespace Lava.Engine
             EventManager.FramebufferResizeEvent += OnFramebufferSize;
         }
 
+        /// <summary>
+        /// This constructor does not add OnFramebufferSize callback
+        /// </summary>
+        internal PerspectiveCamera(Vector3 pos, Vector3 forward, Vector3 up, float fov, float aspect, float near, float far)
+        {
+            FoV = fov;
+            Aspect = aspect;
+            NearPlane = near;
+            FarPlane = far;
+
+            ComputeProjection();
+            SetupCamera(pos, pos - forward, up);
+            ComputeView();
+
+            //EventManager.FramebufferResizeEvent += OnFramebufferSize;
+        }
+
         public PerspectiveCamera() : this(Vector3.Zero, Vector3.UnitZ) { }
     }
 }

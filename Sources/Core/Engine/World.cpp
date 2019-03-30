@@ -17,6 +17,7 @@ namespace Engine
     {
         LOG_INFO("[LOG] Create world {0:#x}\n", (uint64_t)this);
         mEntityList.reserve(INIT_CAPACITY);
+		mIBLProbes.reserve(1);
         mDirty = WORLD_CLEAN;
         mPhysicsWorld = nullptr;
         
@@ -106,6 +107,14 @@ namespace Engine
 		frameConsts.Get().ambientLight = mSkySettings.ambient;
 		frameConsts.Get().numLights = mLightInfo.size();
 		frameConsts.Commit();
+	}
+
+	void World::AddIBLProbeInfo(const IBLProbeInfo & info)
+	{
+		IBLProbe probe;
+		probe.mPosition = info.position;
+		probe.mResIndex = g_ResourceManager.AddIBLProbeInfo(info);
+		mIBLProbes.push_back(probe);
 	}
     
     void World::AddEntity(Entity * ent)
@@ -203,15 +212,15 @@ extern "C"
 		world->mLightInfo.push_back(li);
 	}
 
+	LAVA_API void AddIBLProbeInfo_Native(Engine::World* world, Engine::IBLProbeInfo info)
+	{
+		world->AddIBLProbeInfo(info);
+	}
+
     LAVA_API void SetCameraPos_Native(Engine::World* world, Engine::Vector3 camPos)
     {
         world->mCameraPos = camPos;
     }
-
-	LAVA_API void SetCubeMatrices_Native(Engine::World* world, Engine::Matrix4* matrices)
-	{
-		std::copy(matrices, matrices + 6, world->mCubeMatrices.begin());
-	}
 
 	LAVA_API void SetSkySettings_Native(Engine::World* world, Engine::SkySettings skySettings)
 	{

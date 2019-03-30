@@ -5,6 +5,8 @@
 #include <Engine\GpuArrayBuffer.h>
 #include <Engine\GpuBuffer.h>
 #include <Engine\DescriptorAllocator.h>
+#include <Common\WorldStructs.h>
+#include <Engine\Texture.h>
 #include <buffers.h>
 
 namespace Engine
@@ -46,10 +48,17 @@ namespace Engine
 		GpuArrayBuffer<LightSource>& GetLightsBuffer() { return mLights; };
 		GpuBuffer<FrameConsts>& GetFrameConstsBuffer() { return mFrameConsts; }
 
+		uint32_t AddIBLProbeInfo(const IBLProbeInfo& probe);
+		void ExecuteIBLPasses();
+
+		//const Texture& GetIrradMap(uint32_t ind) {  } TODO
+		const Texture& GetPrefEnvMap(uint32_t ind);
+		//const Texture& GetBrdfMap(uint32_t ind) {  } TODO
+
     private:
 		void InitDescriptorAllocatorsAndSets();
 		void DestroyDescriptorAllocators();
-
+		
 		// Global descriptor sets used by various renderpasses
 		static constexpr uint32_t DESC_SET_SIZE = 8;
         std::array<vk::DescriptorSet, DESC_SET_SIZE> mDescSets;
@@ -63,6 +72,11 @@ namespace Engine
 
 		GpuArrayBuffer<LightSource> mLights;
 		GpuBuffer<FrameConsts> mFrameConsts;
+
+		//std::vector<Texture> mIrradPasses; TODO
+		std::vector<uint32_t> mPrefEnvPasses;
+		//std::vector<Texture> mBrdfMaps; TODO
+		bool mIBLdone;
     };
 
     extern ResourceManager g_ResourceManager;
