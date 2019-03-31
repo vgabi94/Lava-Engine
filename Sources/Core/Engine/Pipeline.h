@@ -3,6 +3,8 @@
 #include "DescriptorAllocator.h"
 #include <optional>
 #include <array>
+#include <string>
+#include <unordered_map>
 
 namespace Engine
 {
@@ -66,10 +68,11 @@ namespace Engine
         std::vector<uint32_t> mSetIndices;
 
         std::vector<vk::DescriptorSetLayoutBinding> mBindings;
+		std::unordered_map<std::string, uint32_t> mUniforms;
 
     private:
         void BuildPipelineLayout(const std::vector<std::string>& shaderNames);
-        void GetBindingsFromShader(const char* file, std::vector<vk::DescriptorSetLayoutBinding>& bindings);
+        void GetBindingsFromShader(const char* file, std::vector<vk::DescriptorSetLayoutBinding>& bindings, std::unordered_map<std::string, uint32_t>& uniforms);
         void AddSetIndex(uint32_t index);
 
         vk::DescriptorSetLayout mDescriptorSetLayout;

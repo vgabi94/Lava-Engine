@@ -1,5 +1,7 @@
 #pragma once
 #include <Engine\Texture.h>
+#include <string>
+#include <unordered_map>
 
 #define GTextureManager Engine::g_TextureManager
 #define TextureAt(i) g_TextureManager.GetTexture(i);
@@ -16,7 +18,7 @@ namespace Engine
 
         void ExecuteOperations();
 
-        vk::Image CreateImage2D(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+        vk::Image CreateImage2D(vk::Extent3D extent, uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
             VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
             VmaAllocation& vmaAllocation, VmaAllocationInfo* vmaAllocationInfo,
             vk::Format format = vk::Format::eR8G8B8A8Unorm);
@@ -30,7 +32,7 @@ namespace Engine
 			vk::Format format = vk::Format::eR8G8B8A8Unorm,
 			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
         
-        vk::ImageView CreateImageView2D(vk::Image image,
+        vk::ImageView CreateImageView2D(vk::Image image, uint32_t mipLevels,
             vk::Format format = vk::Format::eR8G8B8A8Unorm,
             vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
@@ -45,33 +47,41 @@ namespace Engine
 			vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1));
 
 		// ---- Create texture functions ---- //
-		Texture CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth, vk::ImageUsageFlags imageUsageFlags,
+		uint32_t CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
 			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 			vk::Format format = vk::Format::eR8G8B8A8Unorm,
 			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
-		Texture CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
+		uint32_t CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
 			uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
 			VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 			vk::Format format = vk::Format::eR8G8B8A8Unorm,
 			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
 		// ---- Loading functions ---- //
-        uint32_t LoadTex2D(const char* path);
-		uint32_t LoadTexHDR(const char* path);
+        uint32_t LoadTex2D(const char* path, bool genmips = false);
+		uint32_t LoadTexHDR(const char* path, bool genmips = false);
 		// --------------------------- //
         
         /// <summary>
         /// Creates a 1x1 texture given the color rgba
         /// </summary>
         uint32_t CreateTextureFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a);
+
+		uint32_t GetColorTexture(const std::string& name);
         
 		// ---- Samplers ---- //
         vk::Sampler CreateSampler();
 		vk::Sampler CreateSamplerCube();
 		vk::Sampler CreateSamplerPrenv(uint32_t numMips);
 		vk::Sampler CreateHDRSampler();
+		vk::Sampler CreateSamplerBrdf() { return CreateSamplerPrenv(1); }
 		// ------------------ //
+
+		void GenerateMipmaps(vk::CommandBuffer cmdbuf, vk::Image image,
+			uint32_t width, uint32_t height, uint32_t miplevels, uint32_t layers = 1/*,
+			vk::ImageLayout oldLayout = vk::ImageLayout::eTransferDstOptimal,
+			vk::ImageLayout newLayout = vk::ImageLayout::eShaderReadOnlyOptimal*/);
 
         const Texture& GetTexture(uint32_t index) const
         {
@@ -85,10 +95,13 @@ namespace Engine
             uint32_t imageIndex;
             vk::Buffer stagBuffer;
             VmaAllocation stagAllocation;
+			bool genmips;
         };
 
         typedef std::vector<Texture> TextureList;
         typedef std::vector<UploadRequest> UploadRequestList;
+
+		std::unordered_map<std::string, uint32_t> mColorTextures;
 
         TextureList mTexture;
         UploadRequestList mUploadRequest;

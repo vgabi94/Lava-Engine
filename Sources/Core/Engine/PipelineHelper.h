@@ -94,7 +94,7 @@ namespace Engine
 
     static bool IsValidVertexType(const std::string& type)
     {
-        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt" || type == "VertexPos")
+        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt" || type == "VertexPos" || type == "None")
             return true;
         return false;
     }

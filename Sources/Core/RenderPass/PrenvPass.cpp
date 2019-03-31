@@ -38,14 +38,16 @@ namespace Engine
 		constexpr uint32_t dim = 512;
 		mNumMips = static_cast<uint32_t>(std::floor(std::log2(dim))) + 1;
 
-		mPrefilterdEnvMap = g_TextureManager.CreateCubeMapTexture(dim, dim, 1, mNumMips,
+		mPrefilterdEnvMapIndex = g_TextureManager.CreateCubeMapTexture(dim, dim, 1, mNumMips,
 			vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, mPrefEnvMapFormat);
 		mPrefilterdEnvMap.mSampler = g_TextureManager.CreateSamplerPrenv(mNumMips);
+		mPrefilterdEnvMap = TextureAt(mPrefilterdEnvMapIndex);
 
-		mOffscreen = g_TextureManager.CreateTexture2D(dim, dim, 1,
+		uint32_t index = g_TextureManager.CreateTexture2D(dim, dim, 1, 1,
 			vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, mPrefEnvMapFormat);
+		mOffscreen = TextureAt(index);
 		// TODO: maybe layout transition here?
 	}
 
@@ -59,9 +61,9 @@ namespace Engine
 
 	void PrenvPass::Recreate()
 	{
-		_Destroy();
+		/*_Destroy();
 		Init();
-		LOG_INFO("[LOG] PrenvPass recreate {0:#x}\n", (uint64_t)this);
+		LOG_INFO("[LOG] PrenvPass recreate {0:#x}\n", (uint64_t)this);*/
 	}
 
 	void PrenvPass::Setup()

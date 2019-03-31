@@ -1,7 +1,7 @@
 #include "Entity.h"
 #include <Manager\BufferManager.h>
 #include <Manager\PipelineManager.h>
-#include <Engine\World.h>
+#include <Manager\WorldManager.h>
 #include <Common\PushConstantsStructs.h>
 
 namespace Engine
@@ -30,6 +30,16 @@ namespace Engine
         cmdBuff.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex
             | vk::ShaderStageFlagBits::eFragment,
             0, sizeof(ObjPS), &pc);
+
+		static bool pbrUpdated = false; // TODO remove if more IBLProbes
+		if (!pbrUpdated && mMaterial->mPipeType == "pbr")
+		{
+			auto& iblProbe = CurrentWorld->GetNearestIBLProbe(mPosition);
+			mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrEnv);
+			mMaterial->UpdateUniform(1, iblProbe.GetBrdfMap());
+			mMaterial->UpdateUniform(2, iblProbe.GetPrefEnvMap());
+			pbrUpdated = true;
+		}
 
         mMaterial->Bind(cmdBuff);
 		pipe.BindGlobalDescSets(cmdBuff);

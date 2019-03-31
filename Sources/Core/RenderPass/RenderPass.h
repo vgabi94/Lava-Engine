@@ -15,7 +15,7 @@ namespace Engine
 		virtual void Recreate() { };
 
 		virtual void Setup() { }
-		virtual vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages, vk::Semaphore& signalSem) = 0; // TODO no virtual
+		virtual vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages, vk::Semaphore& signalSem) { return {}; }
 		virtual vk::SubmitInfo GetSubmitInfo(vk::Semaphore& signalSem) { return {}; }
 		virtual vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages) { return {}; }
 		virtual vk::SubmitInfo GetSubmitInfo() { return {}; }

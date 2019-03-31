@@ -37,9 +37,9 @@ namespace Engine
 
 		const Vector3& GetPosition() const { return mPosition; }
 
-		const Texture& GetIrradMap();
-		const Texture& GetPrefEnvMap();
-		const Texture& GetBrdfMap();
+		uint32_t GetIrradMap() const;
+		uint32_t GetPrefEnvMap() const;
+		uint32_t GetBrdfMap() const;
 	private:
 		uint32_t mResIndex;
 		Vector3 mPosition;

@@ -76,6 +76,7 @@ namespace Lava.Engine
             g.PipelineDirPath = PipelineDirPath;
             g.ShaderDirPath = ShaderDirPath;
             g.ShaderSourcePath = ShaderSourceDirPath;
+            g.TexturesPath = TextureDirPath;
             Application.SetGlobals(g);
         }
 
@@ -85,6 +86,7 @@ namespace Lava.Engine
             public string MaterialDirPath;
             public string PipelineDirPath;
             public string ShaderSourcePath;
+            public string TexturesPath;
         }
     }
 }

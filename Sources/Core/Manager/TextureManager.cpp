@@ -4,6 +4,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 #include <Engine\Device.h>
+#include <algorithm>
 
 namespace Engine
 {
@@ -12,6 +13,7 @@ namespace Engine
     void TextureManager::Init()
     {
         mTexture.reserve(TEXTURE_INIT_CAPACITY);
+		mColorTextures.reserve(7);
         //mImageAllocation.reserve(TEXTURE_INIT_CAPACITY);
         mUploadFence = GDevice.CreateFence();
 
@@ -29,9 +31,6 @@ namespace Engine
 
         for (size_t i = 0; i < mTexture.size(); ++i)
         {
-            //g_vkDevice.destroySampler(mTexture[i].mSampler);
-            //g_vkDevice.destroyImageView(mTexture[i].mImageView);
-            //vmaDestroyImage(GVmaAllocator, mTexture[i].mImage, mImageAllocation[i]);
 			mTexture[i].Destroy();
         }
 
@@ -59,21 +58,22 @@ namespace Engine
                     ))
             );
 
-            std::vector<vk::ImageMemoryBarrier> postTransferTransition(
-                mUploadRequest.size(),
-                vk::ImageMemoryBarrier(
-                    vk::AccessFlagBits::eTransferWrite,
-                    vk::AccessFlagBits::eShaderRead,
-                    vk::ImageLayout::eTransferDstOptimal,
-                    vk::ImageLayout::eShaderReadOnlyOptimal,
-                    VK_QUEUE_FAMILY_IGNORED,
-                    VK_QUEUE_FAMILY_IGNORED,
-                    {}, // Image will be set in the loop
-                    vk::ImageSubresourceRange(
-                        vk::ImageAspectFlagBits::eColor,
-                        0, 1, 0, 1
-                    ))
-            );
+			std::vector<vk::ImageMemoryBarrier> postTransferTransition;
+			postTransferTransition.reserve(mUploadRequest.size());
+
+			vk::ImageMemoryBarrier postTransferBarrier(
+				vk::AccessFlagBits::eTransferWrite,
+				vk::AccessFlagBits::eShaderRead,
+				vk::ImageLayout::eTransferDstOptimal,
+				vk::ImageLayout::eShaderReadOnlyOptimal,
+				VK_QUEUE_FAMILY_IGNORED,
+				VK_QUEUE_FAMILY_IGNORED,
+				{}, // Image will be set in the loop
+				vk::ImageSubresourceRange(
+					vk::ImageAspectFlagBits::eColor,
+					0, 1, 0, 1
+				)
+			);
 
             std::vector<vk::BufferImageCopy> bufferImageCopy(
                 mUploadRequest.size(),
@@ -96,7 +96,11 @@ namespace Engine
                     mTexture[j].mDepth
                 );
 
-                postTransferTransition[i].image = mTexture[j].mImage;
+				if (!mUploadRequest[i].genmips)
+				{
+					postTransferBarrier.image = mTexture[j].mImage;
+					postTransferTransition.push_back(postTransferBarrier);
+				}
             }
 
             vk::CommandBufferAllocateInfo cmdBuffAllocateInfo(mCommandPool, vk::CommandBufferLevel::ePrimary, 1);
@@ -121,13 +125,20 @@ namespace Engine
                     vk::ImageLayout::eTransferDstOptimal,
                     { bufferImageCopy[i] }
                 );
+
+				if (mUploadRequest[i].genmips)
+				{
+					GenerateMipmaps(mTransferCmdBuffer, mTexture[j].mImage, mTexture[j].mWidth,
+						mTexture[j].mHeight, mTexture[j].mMipLevels, mTexture[j].mLayers);
+				}
             }
 
-            mTransferCmdBuffer.pipelineBarrier(
-                vk::PipelineStageFlagBits::eTransfer,
-                vk::PipelineStageFlagBits::eFragmentShader,
-                (vk::DependencyFlagBits)0, {}, {}, postTransferTransition
-            );
+			if (!postTransferTransition.empty())
+				mTransferCmdBuffer.pipelineBarrier(
+					vk::PipelineStageFlagBits::eTransfer,
+					vk::PipelineStageFlagBits::eFragmentShader,
+					(vk::DependencyFlagBits)0, {}, {}, postTransferTransition
+				);
 
             mTransferCmdBuffer.end();
 
@@ -135,12 +146,11 @@ namespace Engine
             TEXTURE_TRANSFER_QUEUE.submit(1, &subInfo, mUploadFence);
 
             LOG_INFO("[LOG] TextureManager start upload\n");
-
             GDevice.WaitForFence(mUploadFence);
-
-            LOG_INFO("[LOG] TextureManager end upload\n");
-
+            
+			LOG_INFO("[LOG] TextureManager end upload\n");
             GDevice.ResetFence(mUploadFence);
+
             for (auto& req : mUploadRequest)
             {
                 vmaDestroyBuffer(GVmaAllocator, req.stagBuffer, req.stagAllocation);
@@ -151,7 +161,7 @@ namespace Engine
         
     }
 
-    vk::Image TextureManager::CreateImage2D(vk::Extent3D extent, vk::ImageUsageFlags imageUsageFlags,
+    vk::Image TextureManager::CreateImage2D(vk::Extent3D extent, uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
         VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
         VmaAllocation & vmaAllocation, VmaAllocationInfo * vmaAllocationInfo,
         vk::Format format)
@@ -160,7 +170,7 @@ namespace Engine
         vk::Image image;
 
         vk::ImageCreateInfo imageCreateInfo({}, vk::ImageType::e2D,
-            format, extent, 1, 1,
+            format, extent, mipLevels, 1,
             vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, imageUsageFlags,
             vk::SharingMode::eExclusive, 0, nullptr, vk::ImageLayout::eUndefined);
 
@@ -227,13 +237,17 @@ namespace Engine
 		return g_vkDevice.createImageView(imageViewCI);
 	}
 
-    uint32_t TextureManager::LoadTex2D(const char * path)
+    uint32_t TextureManager::LoadTex2D(const char * path, bool genmips)
     {
         Texture tex;
         tex.mDepth = 1;
         stbi_uc* pixels = stbi_load(path, (int*)&tex.mWidth, (int*)&tex.mHeight, (int*)&tex.mChannels, STBI_rgb_alpha);
         vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha;
         assert(pixels);
+
+		uint32_t miplevels = 1;
+		if (genmips)
+			miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(tex.mWidth, tex.mHeight)))) + 1;
         
         VmaAllocation stagAllocation;
         VmaAllocationInfo stagAllocInfo;
@@ -248,13 +262,15 @@ namespace Engine
         VmaAllocation imageAllocation;
 
         vk::Extent3D extent( (uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth );
-        tex.mImage = CreateImage2D(extent,
+        tex.mImage = CreateImage2D(extent, miplevels,
             vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
             VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr);
 
-        tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR8G8B8A8Unorm);
+        tex.mImageView = CreateImageView2D(tex.mImage, miplevels, vk::Format::eR8G8B8A8Unorm);
         tex.mSampler = CreateSampler();
 		tex.mImageAllocation = imageAllocation;
+		tex.mMipLevels = miplevels;
+		tex.mLayers = 1;
 
         uint32_t index = mTexture.size();
         mTexture.push_back(tex);
@@ -264,12 +280,13 @@ namespace Engine
         req.imageIndex = index;
         req.stagBuffer = stagBuffer;
         req.stagAllocation = stagAllocation;
+		req.genmips = genmips;
         mUploadRequest.push_back(req);
 
         return index;
     }
 
-    vk::ImageView TextureManager::CreateImageView2D(vk::Image image, vk::Format format,
+    vk::ImageView TextureManager::CreateImageView2D(vk::Image image, uint32_t mipLevels, vk::Format format,
         vk::ImageAspectFlags aspectFlags)
     {
         vk::ImageViewCreateInfo imageViewCI({},
@@ -277,19 +294,23 @@ namespace Engine
             vk::ImageViewType::e2D,
             format,
             {},
-            vk::ImageSubresourceRange(aspectFlags, 0, 1, 0, 1)
+            vk::ImageSubresourceRange(aspectFlags, 0, mipLevels, 0, 1)
         );
 
         return g_vkDevice.createImageView(imageViewCI);
     }
 
-	uint32_t TextureManager::LoadTexHDR(const char* path)
+	uint32_t TextureManager::LoadTexHDR(const char* path, bool genmips)
 	{
-		Texture tex; // TODO add mipmap generation
+		Texture tex;
 		tex.mDepth = 1;
 		float* pixels = stbi_loadf(path, (int*)&tex.mWidth, (int*)&tex.mHeight, (int*)&tex.mChannels, STBI_rgb_alpha);
 		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha * sizeof(float);
 		assert(pixels);
+
+		uint32_t miplevels = 1;
+		if (genmips)
+			miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(tex.mWidth, tex.mHeight)))) + 1;
 
 		VmaAllocation stagAllocation;
 		VmaAllocationInfo stagAllocInfo;
@@ -304,22 +325,24 @@ namespace Engine
 		VmaAllocation imageAllocation;
 
 		vk::Extent3D extent((uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth);
-		tex.mImage = CreateImage2D(extent,
+		tex.mImage = CreateImage2D(extent, miplevels,
 			vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr, vk::Format::eR32G32B32A32Sfloat);
 
-		tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR32G32B32A32Sfloat);
+		tex.mImageView = CreateImageView2D(tex.mImage, miplevels, vk::Format::eR32G32B32A32Sfloat);
 		tex.mSampler = CreateHDRSampler();
 		tex.mImageAllocation = imageAllocation;
+		tex.mMipLevels = miplevels;
+		tex.mLayers = 1;
 
 		uint32_t index = mTexture.size();
 		mTexture.push_back(tex);
-		//mImageAllocation.push_back(imageAllocation);
 
 		UploadRequest req;
 		req.imageIndex = index;
 		req.stagBuffer = stagBuffer;
 		req.stagAllocation = stagAllocation;
+		req.genmips = genmips;
 		mUploadRequest.push_back(req);
 
 		return index;
@@ -449,7 +472,7 @@ namespace Engine
 		cmdBuf.pipelineBarrier(srcStage, dstStage, {}, {}, {}, { imageBarrier });
 	}
 
-	Texture TextureManager::CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth,
+	uint32_t TextureManager::CreateTexture2D(uint32_t width, uint32_t height, uint32_t depth, uint32_t mipLevels,
 		vk::ImageUsageFlags imageUsageFlags, VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 		vk::Format format, vk::ImageAspectFlags aspectFlags)
 	{
@@ -457,13 +480,18 @@ namespace Engine
 		tex.mWidth = width;
 		tex.mHeight = height;
 		tex.mDepth = depth;
-		tex.mImage = CreateImage2D(vk::Extent3D(width, height, depth), imageUsageFlags, vmaMemoryUsage, vmaAllocationFlags,
+		tex.mMipLevels = mipLevels;
+		tex.mLayers = 1;
+		tex.mImage = CreateImage2D(vk::Extent3D(width, height, depth), mipLevels, imageUsageFlags, vmaMemoryUsage, vmaAllocationFlags,
 			tex.mImageAllocation, nullptr, format);
-		tex.mImageView = CreateImageView2D(tex.mImage, format, aspectFlags);
-		return tex;
+		tex.mImageView = CreateImageView2D(tex.mImage, mipLevels, format, aspectFlags);
+
+		uint32_t index = mTexture.size();
+		mTexture.push_back(tex);
+		return index;
 	}
 
-	Texture TextureManager::CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
+	uint32_t TextureManager::CreateCubeMapTexture(uint32_t width, uint32_t height, uint32_t depth,
 		uint32_t mipLevels, vk::ImageUsageFlags imageUsageFlags,
 		VmaMemoryUsage vmaMemoryUsage, VmaAllocationCreateFlags vmaAllocationFlags,
 		vk::Format format, vk::ImageAspectFlags aspectFlags)
@@ -472,10 +500,15 @@ namespace Engine
 		tex.mWidth = width;
 		tex.mHeight = height;
 		tex.mDepth = depth;
+		tex.mMipLevels = mipLevels;
+		tex.mLayers = 6;
 		tex.mImage = CreateCubeMap(vk::Extent3D(width, height, depth), mipLevels, imageUsageFlags, vmaMemoryUsage, vmaAllocationFlags,
 			tex.mImageAllocation, nullptr, format);
 		tex.mImageView = CreateCubeMapView(tex.mImage, mipLevels, format, aspectFlags);
-		return tex;
+
+		uint32_t index = mTexture.size();
+		mTexture.push_back(tex);
+		return index;
 	}
 
     uint32_t TextureManager::CreateTextureFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
@@ -500,17 +533,18 @@ namespace Engine
         VmaAllocation imageAllocation;
 
         vk::Extent3D extent((uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth);
-        tex.mImage = CreateImage2D(extent,
+        tex.mImage = CreateImage2D(extent, 1,
             vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
             VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr);
 
-        tex.mImageView = CreateImageView2D(tex.mImage, vk::Format::eR8G8B8A8Unorm);
+        tex.mImageView = CreateImageView2D(tex.mImage, 1, vk::Format::eR8G8B8A8Unorm);
         tex.mSampler = CreateSampler();
 		tex.mImageAllocation = imageAllocation;
+		tex.mMipLevels = 1;
+		tex.mLayers = 1;
 
         uint32_t index = mTexture.size();
         mTexture.push_back(tex);
-        //mImageAllocation.push_back(imageAllocation);
 
         UploadRequest req;
         req.imageIndex = index;
@@ -520,6 +554,42 @@ namespace Engine
 
         return index;
     }
+
+#define CONVERT_TO_COLOR(color, red, green, blue) if (name == color) \
+	{ r = red;\
+		g = green;\
+		b = blue;\
+		return; }\
+	
+	static void GetColorFromName(const std::string& name, uint8_t& r, uint8_t& g, uint8_t& b)
+	{
+		CONVERT_TO_COLOR("white", 255, 255, 255)
+		CONVERT_TO_COLOR("black", 0, 0, 0)
+		CONVERT_TO_COLOR("red", 255, 0, 0)
+		CONVERT_TO_COLOR("green", 0, 255, 0)
+		CONVERT_TO_COLOR("blue", 0, 0, 255)
+		THROW("Color not supported!");
+	}
+
+#undef CONVERT_TO_COLOR
+
+	uint32_t TextureManager::GetColorTexture(const std::string & name)
+	{
+		std::string color = name;
+		std::transform(color.begin(), color.end(), color.begin(), ::tolower);
+		uint8_t r, g, b;
+		GetColorFromName(color, r, g, b);
+		
+		uint32_t texInd;
+		if (mColorTextures.find(color) == mColorTextures.end())
+		{
+			texInd = CreateTextureFromColor(r, g, b, 1);
+			mColorTextures[color] = texInd;
+		}
+
+		texInd = mColorTextures[color];
+		return texInd;
+	}
 
     vk::Sampler TextureManager::CreateSampler()
     {
@@ -586,6 +656,69 @@ namespace Engine
 
 		return g_vkDevice.createSampler(samplerCI);
 	}
+
+	void TextureManager::GenerateMipmaps(vk::CommandBuffer cmdbuf, vk::Image image, uint32_t width, uint32_t height,
+		uint32_t miplevels, uint32_t layers/*,
+		vk::ImageLayout oldLayout, vk::ImageLayout newLayout*/)
+	{
+		int32_t mipWidth = width;
+		int32_t mipHeight = height;
+
+		vk::ImageMemoryBarrier barrier;
+		barrier.image = image;
+		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+		barrier.subresourceRange = vk::ImageSubresourceRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, layers);
+
+		for (uint32_t i = 1; i < miplevels; i++)
+		{
+			barrier.subresourceRange.baseMipLevel = i - 1;
+			barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+			barrier.newLayout = vk::ImageLayout::eTransferSrcOptimal;
+			barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+			barrier.dstAccessMask = vk::AccessFlagBits::eTransferRead;
+
+			cmdbuf.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+				vk::PipelineStageFlagBits::eTransfer,
+				{}, {}, {},
+				{ barrier });
+
+			vk::ImageBlit blit(
+				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i - 1, 0, layers),
+				{ vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth, mipHeight, 1) },
+				vk::ImageSubresourceLayers(vk::ImageAspectFlagBits::eColor, i, 0, layers),
+				{ vk::Offset3D(0, 0, 0), vk::Offset3D(mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1) }
+			);
+
+			cmdbuf.blitImage(image, vk::ImageLayout::eTransferSrcOptimal,
+				image, vk::ImageLayout::eTransferDstOptimal,
+				{ blit }, vk::Filter::eLinear);
+
+			barrier.oldLayout = vk::ImageLayout::eTransferSrcOptimal;
+			barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+			barrier.srcAccessMask = vk::AccessFlagBits::eTransferRead;
+			barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+			cmdbuf.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+				vk::PipelineStageFlagBits::eFragmentShader,
+				{}, {}, {},
+				{ barrier });
+
+			if (mipWidth > 1) mipWidth /= 2;
+			if (mipHeight > 1) mipHeight /= 2;
+		}
+
+		barrier.subresourceRange.baseMipLevel = miplevels - 1;
+		barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+		barrier.newLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+		barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
+		barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
+
+		cmdbuf.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+			vk::PipelineStageFlagBits::eFragmentShader,
+			{}, {}, {},
+			{ barrier });
+	}
 	
 	void Texture::Destroy()
 	{
@@ -598,14 +731,14 @@ namespace Engine
 /* EXPORTED INTERFACE */
 extern "C"
 {
-	LAVA_API uint32_t LoadHDR(const char* path)
+	LAVA_API uint32_t LoadHDR(const char* path, bool genmips)
 	{
-		return Engine::g_TextureManager.LoadTexHDR(path);
+		return Engine::g_TextureManager.LoadTexHDR(path, genmips);
 	}
 
-    LAVA_API uint32_t Load2D(const char* path)
+    LAVA_API uint32_t Load2D(const char* path, bool genmips)
     {
-        return Engine::g_TextureManager.LoadTex2D(path);
+        return Engine::g_TextureManager.LoadTex2D(path, genmips);
     }
 
     LAVA_API uint32_t CreateFromColor(uint8_t r, uint8_t g, uint8_t b, uint8_t a)

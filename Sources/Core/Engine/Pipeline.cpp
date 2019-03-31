@@ -375,23 +375,19 @@ namespace Engine
     {
         std::vector<std::string> shaderPath;
         shaderPath.resize(shaderNames.size());
-        std::vector<vk::DescriptorSetLayoutBinding> bindings;
 
         for (size_t i = 0; i < shaderNames.size(); i++)
         {
             shaderPath[i] = g_EngineSettings.ShaderSourcePath + "\\" + shaderNames[i];
-            GetBindingsFromShader(shaderPath[i].c_str(), bindings);
+            GetBindingsFromShader(shaderPath[i].c_str(), mBindings, mUniforms);
         }
-
-		// Needed for uniform initialization in materials
-        mBindings = bindings;
 
         // Convert to poolSizes and init the descriptor allocator
         std::vector<vk::DescriptorPoolSize> poolSizes;
         std::unordered_map<vk::DescriptorType, uint32_t> freq;
-        for (size_t i = 0; i < bindings.size(); i++)
+        for (size_t i = 0; i < mBindings.size(); i++)
         {
-            ++freq[bindings[i].descriptorType];
+            ++freq[mBindings[i].descriptorType];
         }
         for (auto it = freq.begin(); it != freq.end(); it++)
         {
@@ -400,8 +396,8 @@ namespace Engine
 
         // Create descriptor set layout
         vk::DescriptorSetLayoutCreateInfo descSetCI({},
-            static_cast<uint32_t>(bindings.size()),
-            bindings.data());
+            static_cast<uint32_t>(mBindings.size()),
+            mBindings.data());
 
         mDescriptorSetLayout = g_vkDevice.createDescriptorSetLayout(descSetCI);
 
@@ -451,7 +447,7 @@ namespace Engine
         mPipelineLayout = g_vkDevice.createPipelineLayout(pipelineLayoutInfo);
     }
 
-    void Pipeline::GetBindingsFromShader(const char * file, std::vector<vk::DescriptorSetLayoutBinding>& bindings)
+    void Pipeline::GetBindingsFromShader(const char * file, std::vector<vk::DescriptorSetLayoutBinding>& bindings, std::unordered_map<std::string, uint32_t>& uniforms)
     {
         std::ifstream in(file);
         std::string line;
@@ -483,6 +479,7 @@ namespace Engine
                         else
                         {
                             bindings.push_back(binding); 
+							uniforms[dest.ident] = binding.binding;
                         }
                 }
                 else

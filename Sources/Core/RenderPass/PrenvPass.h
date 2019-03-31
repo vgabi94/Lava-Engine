@@ -26,6 +26,7 @@ namespace Engine
 		vk::SubmitInfo GetSubmitInfo() override;
 
 		const Texture& GetPrefEnvMap() const { return mPrefilterdEnvMap; }
+		uint32_t GetPrefEnvMapIndex() const { return mPrefilterdEnvMapIndex; }
 
 		MEM_POOL_DECLARE(PrenvPass);
 
@@ -44,6 +45,7 @@ namespace Engine
 		uint32_t mCountVBO;
 		struct Material* mMaterial;
 		uint32_t mVBO;
+		uint32_t mPrefilterdEnvMapIndex;
 		Texture mPrefilterdEnvMap;
 		Texture mOffscreen;
 		vk::Format mPrefEnvMapFormat;

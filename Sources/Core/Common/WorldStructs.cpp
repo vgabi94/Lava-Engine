@@ -3,21 +3,18 @@
 
 namespace Engine
 {
-	const Texture & IBLProbe::GetIrradMap()
+	uint32_t IBLProbe::GetIrradMap() const
 	{
-		// TODO: insert return statement here
-		return Texture();
+		return (uint32_t)-1;
 	}
 	
-	const Texture & IBLProbe::GetPrefEnvMap()
+	uint32_t IBLProbe::GetPrefEnvMap() const
 	{
-		// TODO: insert return statement here
-		return Texture();
+		return g_ResourceManager.GetPrefEnvMap(mResIndex);
 	}
 	
-	const Texture & IBLProbe::GetBrdfMap()
+	uint32_t IBLProbe::GetBrdfMap() const
 	{
-		// TODO: insert return statement here
-		return Texture();
+		return g_ResourceManager.GetBrdfMap(mResIndex);
 	}
 }

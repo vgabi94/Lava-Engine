@@ -39,6 +39,7 @@ namespace Engine
         std::string PipelineJSONPath;
         std::string MaterialJSONPath;
         std::string ShaderSourcePath;
+        std::string TexturesPath;
     };
 
     extern EngineSettings g_EngineSettings;
@@ -83,5 +84,6 @@ namespace Engine
         const char* MaterialDirPath;
         const char* PipelineJSONPath;
         const char* ShaderSourcePath;
+		const char* TexturesPath;
     };
 }

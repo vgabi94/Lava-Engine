@@ -240,6 +240,7 @@ extern "C"
         EngineGlobals.PipelineJSONPath = globals.PipelineJSONPath;
         EngineGlobals.ShaderModulePath = globals.ShaderModulePath;
         EngineGlobals.ShaderSourcePath = globals.ShaderSourcePath;
+        EngineGlobals.TexturesPath = globals.TexturesPath;
     }
 
 #ifdef LAVA_EDITOR

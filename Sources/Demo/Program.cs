@@ -59,8 +59,8 @@ namespace Demo
             material.SetUniform(0, tex);
             Material material2 = new Material("phong");
             material2.SetUniform(0, tex);
-            Material material3 = new Material("phong");
-            material3.SetUniform(0, tex);
+            Material material3 = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
+            //material3.SetUniform(0, tex);
 
             VisualEntity bunny1 = new VisualEntity(mesh, material);
             VisualEntity bunny2 = new VisualEntity(mesh2, material2);

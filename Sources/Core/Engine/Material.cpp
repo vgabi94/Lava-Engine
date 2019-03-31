@@ -36,6 +36,14 @@ namespace Engine
         dirty = true;
     }
 
+	void Material::UpdateUniform(const std::string& name, const std::any& value)
+	{
+		Pipeline& pipeline = PipelineOfType(mPipeType);
+		THROW_IF(pipeline.mUniforms.find(name) == pipeline.mUniforms.end(), "Uniform name doesn't exist!");
+		uint32_t binding = pipeline.mUniforms[name];
+		UpdateUniform(binding, value);
+	}
+
     void Material::Bind(vk::CommandBuffer cmdBuff)
     {
         WriteDescriptorsIfDirty();

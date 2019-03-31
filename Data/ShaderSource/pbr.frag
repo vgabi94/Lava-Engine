@@ -13,7 +13,7 @@ IN(2, vec2, inUV);
 
 DECL_OBJ_PS;
 
-UNIFORM0(0, samplerCube, samplerIrradiance);
+UNIFORM0(0, sampler2D, samplerIrradiance);
 UNIFORM0(1, sampler2D, samplerBRDFLUT);
 UNIFORM0(2, samplerCube, prefilteredMap);
 
@@ -26,6 +26,15 @@ UNIFORM0(7, sampler2D, roughnessMap);
 OUT(0, vec4, outColor);
 
 #define ALBEDO pow(texture(albedoMap, inUV).rgb, vec3(2.2))
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
 
 vec3 prefilteredReflection(vec3 R, float roughness)
 {
@@ -110,7 +119,10 @@ void main()
 	
 	vec2 brdf = texture(samplerBRDFLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 	vec3 reflection = prefilteredReflection(R, roughness).rgb;	
-	vec3 irradiance = texture(samplerIrradiance, N).rgb;
+	//vec3 irradiance = texture(samplerIrradiance, N).rgb;
+	vec2 uv = SampleSphericalMap(N);
+    uv.y = 1.0 - uv.y;
+    vec3 irradiance = texture(samplerIrradiance, uv).rgb;
 
 	// Diffuse based on irradiance
 	vec3 diffuse = irradiance * ALBEDO;	

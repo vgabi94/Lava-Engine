@@ -23,6 +23,7 @@ namespace Engine
         void InitializeUniforms();
 
         void UpdateUniform(uint32_t binding, const std::any& value);
+        void UpdateUniform(const std::string&, const std::any& value);
 
         void Bind(vk::CommandBuffer cmdBuff);
 

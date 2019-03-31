@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "iron/basecolor.png",
+    "normalMap": "iron/normal.png",
+    "aoMap": "white",
+    "metallicMap": "iron/metallic.png",
+    "roughnessMap": "iron/roughness.png"
+}

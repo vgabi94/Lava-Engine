@@ -183,7 +183,7 @@ namespace Vulkan
         mImageView.resize(mImage.size());
         for (unsigned int i = 0; i < mImageView.size(); i++)
         {
-            mImageView[i] = GTextureManager.CreateImageView2D(mImage[i], mImageFormat);
+            mImageView[i] = GTextureManager.CreateImageView2D(mImage[i], 1, mImageFormat);
         }
     }
 

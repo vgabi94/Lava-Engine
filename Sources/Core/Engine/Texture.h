@@ -12,6 +12,8 @@ namespace Engine
 		uint32_t mWidth, mHeight;
 		uint32_t mDepth;
 		uint32_t mChannels;
+		uint32_t mMipLevels;
+		uint32_t mLayers;
 		vk::Image mImage;
 		vk::Sampler mSampler;
 		vk::ImageView mImageView;

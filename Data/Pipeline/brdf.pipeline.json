@@ -1,0 +1,8 @@
+{
+    "vertexInput": "None",
+    "shaders": ["genbrdflut.vert", "genbrdflut.frag"],
+    "depthCompareOp": "lequal",
+    "depthTestEnable": false,
+    "depthWriteEnable": false,
+    "renderPass" : "brdfPass"
+}

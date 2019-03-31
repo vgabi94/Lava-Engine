@@ -4,6 +4,7 @@
 #include <Manager\BufferManager.h>
 #include <Manager\RenderpassManager.h>
 #include <RenderPass\PrenvPass.h>
+#include <RenderPass\BrdfPass.h>
 #include <Engine\Device.h>
 #include <Engine\Engine.h>
 #include <setslots.h>
@@ -84,11 +85,11 @@ namespace Engine
 		vk::Extent3D extent = { g_Engine.GetWidth(), g_Engine.GetHeight(), 1 };
 		mDepthFormat = vk::Format::eD32Sfloat;
 
-		mDepthImage = g_TextureManager.CreateImage2D(extent,
+		mDepthImage = g_TextureManager.CreateImage2D(extent, 1,
 			vk::ImageUsageFlagBits::eDepthStencilAttachment,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, mDepthAlloc, nullptr, mDepthFormat);
 
-		mDepthImageView = g_TextureManager.CreateImageView2D(mDepthImage,
+		mDepthImageView = g_TextureManager.CreateImageView2D(mDepthImage, 1,
 			mDepthFormat, vk::ImageAspectFlagBits::eDepth);
 
 		g_TextureManager.TransitionImageLayout(mDepthImage, mDepthFormat,
@@ -124,6 +125,12 @@ namespace Engine
 		PrenvPass* prenv = g_RenderpassManager.AddPassTask<PrenvPass>(passIndex);
 		std::copy(probe.matrices, probe.matrices + 6, prenv->mCubeMatrices.begin());
 		mPrefEnvPasses.push_back(passIndex);
+
+		// Brdf lut pass
+		BrdfPass* brdf = g_RenderpassManager.AddPassTask<BrdfPass>(passIndex);
+		mBrdfPasses.push_back(passIndex);
+
+		// TODO irad passes
 		
 		return ind;
 	}
@@ -135,27 +142,37 @@ namespace Engine
 		//std::vector<PrenvPass*> irradPasses;  TODO
 		std::vector<PrenvPass*> prenvPasses;
 		prenvPasses.reserve(mPrefEnvPasses.size());
-		//std::vector<PrenvPass*> brdfPasses; TODO
+		std::vector<BrdfPass*> brdfPasses;
+		brdfPasses.resize(mBrdfPasses.size());
 
 		for (size_t i = 0; i < mPrefEnvPasses.size(); i++)
 		{
 			prenvPasses[i] = g_RenderpassManager.GetPassTaskAt<PrenvPass>(mPrefEnvPasses[i]);
+			brdfPasses[i] = g_RenderpassManager.GetPassTaskAt<BrdfPass>(mBrdfPasses[i]);
 		}
-		// TODO irrad and brdf
+		// TODO irrad
 
 		SetupPasses(prenvPasses);
-		//TODO irrad and brdf
+		SetupPasses(brdfPasses);
+		//TODO irrad
 
 		ExecutePasses(prenvPasses);
-		// TODO irrad and brdf
+		ExecutePasses(brdfPasses);
+		// TODO irrad
 
 		mIBLdone = true;
 	}
 
-	inline const Texture & ResourceManager::GetPrefEnvMap(uint32_t ind)
+	uint32_t ResourceManager::GetPrefEnvMap(uint32_t ind) const
 	{
-		THROW_IF(ind >= mPrefEnvPasses.size(), "Map index out of range!");
-		return g_RenderpassManager.GetPassTaskAt<PrenvPass>(mPrefEnvPasses[ind])->mPrefilterdEnvMap;
+		THROW_IF(ind >= mPrefEnvPasses.size(), "Env map passes index out of range!");
+		return g_RenderpassManager.GetPassTaskAt<PrenvPass>(mPrefEnvPasses[ind])->mPrefilterdEnvMapIndex;
+	}
+
+	uint32_t ResourceManager::GetBrdfMap(uint32_t ind) const
+	{
+		THROW_IF(ind >= mBrdfPasses.size(), "Brdf lut passes index out of range!");
+		return g_RenderpassManager.GetPassTaskAt<BrdfPass>(mBrdfPasses[ind])->mBrdfLutIndex;
 	}
 
 	void ResourceManager::InitDescriptorAllocatorsAndSets()

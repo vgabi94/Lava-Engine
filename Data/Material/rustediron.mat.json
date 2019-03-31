@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "rustediron/basecolor.png",
+    "normalMap": "rustediron/normal.png",
+    "aoMap": "white",
+    "metallicMap": "rustediron/metallic.png",
+    "roughnessMap": "rustediron/roughness.png"
+}

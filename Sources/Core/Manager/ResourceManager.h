@@ -52,8 +52,8 @@ namespace Engine
 		void ExecuteIBLPasses();
 
 		//const Texture& GetIrradMap(uint32_t ind) {  } TODO
-		const Texture& GetPrefEnvMap(uint32_t ind);
-		//const Texture& GetBrdfMap(uint32_t ind) {  } TODO
+		uint32_t GetPrefEnvMap(uint32_t ind) const;
+		uint32_t GetBrdfMap(uint32_t ind) const;
 
     private:
 		void InitDescriptorAllocatorsAndSets();
@@ -75,7 +75,7 @@ namespace Engine
 
 		//std::vector<Texture> mIrradPasses; TODO
 		std::vector<uint32_t> mPrefEnvPasses;
-		//std::vector<Texture> mBrdfMaps; TODO
+		std::vector<uint32_t> mBrdfPasses;
 		bool mIBLdone;
     };
 
