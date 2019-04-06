@@ -4,16 +4,21 @@
 #include "common.h"
 #include "pbrutil.h"
 
-layout (location = 0) in vec3 inPos;
-layout (location = 0) out vec4 outColor;
-
 IN(0, vec3, inPos);
 OUT(0, vec4, outColor);
 
-// TODO this must change to sampler2D too
-UNIFORM0(0, samplerCube, samplerEnv);
+UNIFORM0(0, sampler2D, samplerEnv);
 
 DECL_PRENV_PS;
+
+const vec2 invAtan = vec2(0.1591, 0.3183);
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= invAtan;
+    uv += 0.5;
+    return uv;
+}
 
 vec3 prefilterEnvMap(vec3 R, float roughness)
 {
@@ -41,7 +46,10 @@ vec3 prefilterEnvMap(vec3 R, float roughness)
 			float omegaP = 4.0 * PI / (6.0 * envMapDim * envMapDim);
 			// Biased (+1.0) mip level for better result
 			float mipLevel = roughness == 0.0 ? 0.0 : max(0.5 * log2(omegaS / omegaP) + 1.0, 0.0f);
-			color += textureLod(samplerEnv, L, mipLevel).rgb * dotNL;
+			//color += textureLod(samplerEnv, L, mipLevel).rgb * dotNL;
+			vec2 uv = SampleSphericalMap(L);
+    		uv.y = 1.0 - uv.y;
+			color += textureLod(samplerEnv, uv, mipLevel).rgb * dotNL;
 			totalWeight += dotNL;
 
 		}

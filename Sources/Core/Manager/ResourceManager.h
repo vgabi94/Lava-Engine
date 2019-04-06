@@ -8,6 +8,8 @@
 #include <Common\WorldStructs.h>
 #include <Engine\Texture.h>
 #include <buffers.h>
+#include <RenderPass\BrdfPassResources.h>
+#include <RenderPass\PrenvPassResources.h>
 
 namespace Engine
 {
@@ -58,6 +60,7 @@ namespace Engine
     private:
 		void InitDescriptorAllocatorsAndSets();
 		void DestroyDescriptorAllocators();
+		void DestroyRenderPassResources();
 		
 		// Global descriptor sets used by various renderpasses
 		static constexpr uint32_t DESC_SET_SIZE = 8;
@@ -73,9 +76,9 @@ namespace Engine
 		GpuArrayBuffer<LightSource> mLights;
 		GpuBuffer<FrameConsts> mFrameConsts;
 
-		//std::vector<Texture> mIrradPasses; TODO
-		std::vector<uint32_t> mPrefEnvPasses;
-		std::vector<uint32_t> mBrdfPasses;
+		//TODO std::vector<Texture> mIrradPasses;
+		std::vector<PrenvPassResources> mPrenvRes;
+		std::vector<BrdfPassResources> mBrdfRes;
 		bool mIBLdone;
     };
 

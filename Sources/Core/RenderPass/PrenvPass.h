@@ -5,6 +5,7 @@
 #include <Manager\TextureManager.h>
 #include <Common\Constants.h>
 #include <Common\MathTypes.h>
+#include "PrenvPassResources.h"
 
 namespace Engine
 {
@@ -25,8 +26,13 @@ namespace Engine
 		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages) override;
 		vk::SubmitInfo GetSubmitInfo() override;
 
-		const Texture& GetPrefEnvMap() const { return mPrefilterdEnvMap; }
-		uint32_t GetPrefEnvMapIndex() const { return mPrefilterdEnvMapIndex; }
+		//const Texture& GetPrefEnvMap() const { return mRes->mPrefilterdEnvMap; }
+		//uint32_t GetPrefEnvMapIndex() const { return mRes->mPrefilterdEnvMapIndex; }
+
+		void SetResources(PrenvPassResources* res) { mRes = res; }
+
+		vk::RenderPass GetRenderpass() const { return mRenderPass; }
+		vk::CommandPool GetCommandPool() const { return mCommandPool; }
 
 		MEM_POOL_DECLARE(PrenvPass);
 
@@ -45,11 +51,11 @@ namespace Engine
 		uint32_t mCountVBO;
 		struct Material* mMaterial;
 		uint32_t mVBO;
+		/*Texture mOffscreen;
 		uint32_t mPrefilterdEnvMapIndex;
 		Texture mPrefilterdEnvMap;
-		Texture mOffscreen;
-		vk::Format mPrefEnvMapFormat;
 		uint32_t mNumMips;
-		std::array<Matrix4, 6> mCubeMatrices;
+		std::array<Matrix4, 6> mCubeMatrices;*/
+		PrenvPassResources* mRes;
 	};
 }

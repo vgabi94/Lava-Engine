@@ -461,6 +461,24 @@ namespace Engine
 			srcStage = vk::PipelineStageFlagBits::eTopOfPipe;
 			dstStage = vk::PipelineStageFlagBits::eEarlyFragmentTests;
 		}
+		else if (oldLayout == vk::ImageLayout::eColorAttachmentOptimal &&
+			newLayout == vk::ImageLayout::eTransferSrcOptimal)
+		{
+			srcAccessFlags = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+			dstAccessFlags = vk::AccessFlagBits::eTransferRead;
+
+			srcStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			dstStage = vk::PipelineStageFlagBits::eTransfer;
+		}
+		else if (oldLayout == vk::ImageLayout::eTransferSrcOptimal &&
+			newLayout == vk::ImageLayout::eColorAttachmentOptimal)
+		{
+			dstAccessFlags = vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eColorAttachmentRead;
+			srcAccessFlags = vk::AccessFlagBits::eTransferRead;
+
+			dstStage = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+			srcStage = vk::PipelineStageFlagBits::eTransfer;
+		}
 		else
 		{
 			throw std::invalid_argument("Unsupported layout transition!");

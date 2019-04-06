@@ -5,6 +5,7 @@
 #include <Manager\TextureManager.h>
 #include <Common\Constants.h>
 #include <Common\MathTypes.h>
+#include <RenderPass\BrdfPassResources.h>
 
 namespace Engine
 {
@@ -25,8 +26,13 @@ namespace Engine
 		vk::SubmitInfo GetSubmitInfo(vk::Semaphore& waitSem, vk::PipelineStageFlags waitStages) override;
 		vk::SubmitInfo GetSubmitInfo() override;
 
-		const Texture& GetBrdfLut() const { return mBrdfLut; }
-		uint32_t GetBrdfLutIndex() const { return mBrdfLutIndex; }
+		//const Texture& GetBrdfLut() const { return mRes->mBrdfLut; }
+		//uint32_t GetBrdfLutIndex() const { return mRes->mBrdfLutIndex; }
+
+		void SetResources(BrdfPassResources* res) { mRes = res; }
+
+		vk::RenderPass GetRenderpass() const { return mRenderPass; }
+		vk::CommandPool GetCommandPool() const { return mCommandPool; }
 
 		MEM_POOL_DECLARE(BrdfPass);
 
@@ -43,8 +49,9 @@ namespace Engine
 		void DestroyCommandPool();
 
 		struct Material* mMaterial;
-		uint32_t mBrdfLutIndex;
+		/*uint32_t mBrdfLutIndex;
 		Texture mBrdfLut;
-		vk::Format mBrdfLutFormat;
+		vk::Format mBrdfLutFormat;*/
+		BrdfPassResources* mRes;
 	};
 }

@@ -2,6 +2,7 @@
 #include <Manager\MaterialManager.h>
 #include <Manager\PipelineManager.h>
 #include <Manager\RenderpassManager.h>
+#include "BrdfPassResources.h"
 
 namespace Engine
 {
@@ -23,14 +24,14 @@ namespace Engine
 	{
 		mMaterial = g_MaterialManager.NewMaterial("brdf");
 
-		mBrdfLutFormat = vk::Format::eR16G16Sfloat;
+		/*mBrdfLutFormat = vk::Format::eR16G16Sfloat;
 		constexpr uint32_t dim = 512;
 
 		mBrdfLutIndex = g_TextureManager.CreateTexture2D(dim, dim, 1, 1,
 			vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, mBrdfLutFormat);
 		mBrdfLut = TextureAt(mBrdfLutIndex);
-		mBrdfLut.mSampler = g_TextureManager.CreateSamplerBrdf();
+		mBrdfLut.mSampler = g_TextureManager.CreateSamplerBrdf();*/
 	}
 
 	void BrdfPass::Destroy()
@@ -59,7 +60,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			1, &waitSem,
 			mWaitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			1, &signalSem
 		);
 		return submitInfo;
@@ -70,7 +71,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			0, nullptr,
 			mWaitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			1, &signalSem
 		);
 		return submitInfo;
@@ -82,7 +83,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			1, &waitSem,
 			waitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			0, nullptr
 		);
 		return submitInfo;
@@ -93,7 +94,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			0, nullptr,
 			nullptr,
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			0, nullptr
 		);
 		return submitInfo;
@@ -105,13 +106,13 @@ namespace Engine
 		GDevice.WaitForFence(g_RenderpassManager.GetFenceAt(1));
 		DestroyRenderPass();
 		DestroyCommandPool();
-		DestroyFramebuffers();
+		//DestroyFramebuffers();
 	}
 
 	void BrdfPass::CreateRenderPass()
 	{
 		vk::AttachmentDescription colorAttachment({},
-			mBrdfLutFormat,
+			BrdfPassResources::FORMAT,
 			vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear,
 			vk::AttachmentStoreOp::eStore,
@@ -154,9 +155,10 @@ namespace Engine
 
 	void BrdfPass::CreateFramebuffers()
 	{
-		mFramebuffer.resize(1);
+		//! This is created in BrdfPassResources
+		/*mFramebuffer.resize(1);
 
-		vk::ImageView imageViews[] = { mBrdfLut.mImageView };
+		vk::ImageView imageViews[] = { mR.mImageView };
 
 		vk::FramebufferCreateInfo info({},
 			mRenderPass,
@@ -167,7 +169,7 @@ namespace Engine
 			1);
 
 		vk::Framebuffer fbuff = g_vkDevice.createFramebuffer(info);
-		mFramebuffer[0] = fbuff;
+		mFramebuffer[0] = fbuff;*/
 	}
 
 	void BrdfPass::CreateCommandPoolAndBuffer()
@@ -178,18 +180,19 @@ namespace Engine
 			GRAPHICS_FAMILY_INDEX);
 		mCommandPool = g_vkDevice.createCommandPool(info);
 
-		vk::CommandBufferAllocateInfo allocInfo(
+		//! Created in BrdfPassResources
+		/*vk::CommandBufferAllocateInfo allocInfo(
 			mCommandPool,
 			vk::CommandBufferLevel::ePrimary,
 			(uint32_t)mFramebuffer.size());
 
-		mCommandBuffer = g_vkDevice.allocateCommandBuffers(allocInfo);
+		mCommandBuffer = g_vkDevice.allocateCommandBuffers(allocInfo);*/
 	}
 
 	void BrdfPass::RecordCommandBuffer()
 	{
-		vk::CommandBuffer& cmdBuf = mCommandBuffer[0];
-		uint32_t dim = mBrdfLut.mWidth;
+		vk::CommandBuffer& cmdBuf = mRes->mCmdBuffer;
+		uint32_t dim = mRes->mBrdfLut.mWidth;
 
 		vk::CommandBufferBeginInfo beginInfo(
 			vk::CommandBufferUsageFlagBits::eSimultaneousUse |
@@ -206,7 +209,7 @@ namespace Engine
 
 		vk::RenderPassBeginInfo renderPassInfo(
 			mRenderPass,
-			mFramebuffer[0],
+			mRes->mFramebuffer,
 			vk::Rect2D({ 0, 0 }, { dim, dim }),
 			1,
 			clearValues);

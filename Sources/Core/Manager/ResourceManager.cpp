@@ -76,6 +76,7 @@ namespace Engine
     {
 		DestroyDepthBuffer();
 		DestroyDescriptorAllocators();
+		DestroyRenderPassResources();
 		mLights.Destroy();
 		mFrameConsts.Destroy();
     }
@@ -118,17 +119,24 @@ namespace Engine
 
 	uint32_t ResourceManager::AddIBLProbeInfo(const IBLProbeInfo& probe)
 	{
-		uint32_t ind = mPrefEnvPasses.size();
-		uint32_t passIndex;
+		uint32_t ind = mPrenvRes.size();
 
 		// Prefiltered environment map pass
-		PrenvPass* prenv = g_RenderpassManager.AddPassTask<PrenvPass>(passIndex);
-		std::copy(probe.matrices, probe.matrices + 6, prenv->mCubeMatrices.begin());
-		mPrefEnvPasses.push_back(passIndex);
+		PrenvPass* prenv = g_RenderpassManager.GetPass<PrenvPass>(RPConst::PRENV);
+		PrenvPassResources prenvRes;
+		prenvRes.Create();
+		prenvRes.InitFramebuffer(prenv->GetRenderpass());
+		prenvRes.InitCmdBuffer(prenv->GetCommandPool());
+		std::copy(probe.matrices, probe.matrices + 6, prenvRes.mCubeMatrices.begin());
+		mPrenvRes.push_back(prenvRes);
 
 		// Brdf lut pass
-		BrdfPass* brdf = g_RenderpassManager.AddPassTask<BrdfPass>(passIndex);
-		mBrdfPasses.push_back(passIndex);
+		BrdfPass* brdf = g_RenderpassManager.GetPass<BrdfPass>(RPConst::BRDF);
+		BrdfPassResources brdfRes;
+		brdfRes.Create();
+		brdfRes.InitFamebuffer(brdf->GetRenderpass());
+		brdfRes.InitCmdBuffer(brdf->GetCommandPool());
+		mBrdfRes.push_back(brdfRes);
 
 		// TODO irad passes
 		
@@ -139,40 +147,97 @@ namespace Engine
 	{
 		if (mIBLdone) return;
 
-		//std::vector<PrenvPass*> irradPasses;  TODO
-		std::vector<PrenvPass*> prenvPasses;
-		prenvPasses.reserve(mPrefEnvPasses.size());
-		std::vector<BrdfPass*> brdfPasses;
-		brdfPasses.resize(mBrdfPasses.size());
+		//? TODO irrad ?
 
-		for (size_t i = 0; i < mPrefEnvPasses.size(); i++)
+		// Setup passes
+		PrenvPass* prenvPass = g_RenderpassManager.GetPass<PrenvPass>(RPConst::PRENV);
+		BrdfPass* brdfPass = g_RenderpassManager.GetPass<BrdfPass>(RPConst::BRDF);
+		for (size_t i = 0; i < mPrenvRes.size(); i++)
 		{
-			prenvPasses[i] = g_RenderpassManager.GetPassTaskAt<PrenvPass>(mPrefEnvPasses[i]);
-			brdfPasses[i] = g_RenderpassManager.GetPassTaskAt<BrdfPass>(mBrdfPasses[i]);
+			prenvPass->SetResources(&mPrenvRes[i]);
+			brdfPass->SetResources(&mBrdfRes[i]);
+			prenvPass->Setup();
+			brdfPass->Setup();
 		}
-		// TODO irrad
 
-		SetupPasses(prenvPasses);
-		SetupPasses(brdfPasses);
-		//TODO irrad
+		// Execute passes
+		std::vector<vk::SubmitInfo> submitInfosPrenv;
+		std::vector<vk::SubmitInfo> submitInfosBrdf;
+		submitInfosPrenv.reserve(mPrenvRes.size());
+		submitInfosBrdf.reserve(mBrdfRes.size());
+		vk::Fence fence1 = GDevice.CreateFence();
+		vk::Fence fence2 = GDevice.CreateFence();
 
-		ExecutePasses(prenvPasses);
-		ExecutePasses(brdfPasses);
-		// TODO irrad
+		if (mPrenvRes.size() == 1)
+		{
+			submitInfosPrenv.push_back(prenvPass->GetSubmitInfo());
+			submitInfosBrdf.push_back(brdfPass->GetSubmitInfo());
+		}
+		else
+		{
+			submitInfosPrenv.push_back(prenvPass->GetSubmitInfo(mPrenvRes[0].mSemaphore));
+			submitInfosBrdf.push_back(brdfPass->GetSubmitInfo(mBrdfRes[0].mSemaphore));
+
+			for (size_t i = 1; i < mPrenvRes.size() - 1; i++)
+			{
+				prenvPass->SetResources(&mPrenvRes[i]);
+				submitInfosPrenv.push_back(
+					prenvPass->GetSubmitInfo(
+						mPrenvRes[i - 1].mSemaphore,
+						prenvPass->GetPipelineStage(),
+						mPrenvRes[i].mSemaphore
+					)
+				);
+
+				brdfPass->SetResources(&mBrdfRes[i]);
+				submitInfosBrdf.push_back(
+					brdfPass->GetSubmitInfo(
+						mBrdfRes[i - 1].mSemaphore,
+						brdfPass->GetPipelineStage(),
+						mBrdfRes[i].mSemaphore
+					)
+				);
+			}
+
+			const uint32_t last = mPrenvRes.size() - 1;
+
+			prenvPass->SetResources(&mPrenvRes[last]);
+			submitInfosPrenv.push_back(
+				prenvPass->GetSubmitInfo(
+					mPrenvRes[last - 1].mSemaphore,
+					prenvPass->GetPipelineStage()
+				)
+			);
+
+			brdfPass->SetResources(&mBrdfRes[last]);
+			submitInfosBrdf.push_back(
+				brdfPass->GetSubmitInfo(
+					mBrdfRes[last - 1].mSemaphore,
+					brdfPass->GetPipelineStage()
+				)
+			);
+		}
+
+		GRAPHICS_QUEUE.submit(submitInfosPrenv, fence1);
+		GRAPHICS_QUEUE.submit(submitInfosBrdf, fence2);
+		GDevice.WaitForFence(fence1);
+		GDevice.WaitForFence(fence2);
+		g_vkDevice.destroyFence(fence1);
+		g_vkDevice.destroyFence(fence2);
 
 		mIBLdone = true;
 	}
 
 	uint32_t ResourceManager::GetPrefEnvMap(uint32_t ind) const
 	{
-		THROW_IF(ind >= mPrefEnvPasses.size(), "Env map passes index out of range!");
-		return g_RenderpassManager.GetPassTaskAt<PrenvPass>(mPrefEnvPasses[ind])->mPrefilterdEnvMapIndex;
+		THROW_IF(ind >= mPrenvRes.size(), "Env map passes index out of range!");
+		return mPrenvRes[ind].mPrefilterdEnvMapIndex;
 	}
 
 	uint32_t ResourceManager::GetBrdfMap(uint32_t ind) const
 	{
-		THROW_IF(ind >= mBrdfPasses.size(), "Brdf lut passes index out of range!");
-		return g_RenderpassManager.GetPassTaskAt<BrdfPass>(mBrdfPasses[ind])->mBrdfLutIndex;
+		THROW_IF(ind >= mBrdfRes.size(), "Brdf lut passes index out of range!");
+		return mBrdfRes[ind].mBrdfLutIndex;
 	}
 
 	void ResourceManager::InitDescriptorAllocatorsAndSets()
@@ -208,6 +273,19 @@ namespace Engine
 		for (auto& descAlloc : mDescAllocators)
 		{
 			descAlloc.Destroy();
+		}
+	}
+	
+	void ResourceManager::DestroyRenderPassResources()
+	{
+		for (auto& res : mPrenvRes)
+		{
+			res.Destroy();
+		}
+
+		for (auto& res : mBrdfRes)
+		{
+			res.Destroy();
 		}
 	}
 }

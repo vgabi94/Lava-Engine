@@ -66,7 +66,7 @@ vec3 specularContribution(vec3 L, vec3 V, vec3 N, vec3 F0, float metallic, float
 		vec3 F = F_Schlick(dotNV, F0);		
 		vec3 spec = D * F * G / (4.0 * dotNL * dotNV + 0.001);		
 		vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);			
-		color += (kD * ALBEDO / PI + spec) * dotNL;
+		color += (kD * ALBEDO / PI + spec) * dotNL * lightColor;
 	}
 
 	return color;
@@ -114,7 +114,7 @@ void main()
         {
             L = normalize(g_LightSource[i].position.xyz - inWorldPos);
         }
-		Lo += specularContribution(L, V, N, F0, metallic, roughness, g_LightSource[i].color);
+		Lo += specularContribution(L, V, N, F0, metallic, roughness, g_LightSource[i].color.rgb);
 	}
 	
 	vec2 brdf = texture(samplerBRDFLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;

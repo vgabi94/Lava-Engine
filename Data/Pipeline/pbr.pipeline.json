@@ -1,0 +1,5 @@
+{
+    "vertexInput": "Vertex",
+    "shaders": ["pbr.vert", "pbr.frag"],
+    "globalsets": [1, 2]
+}

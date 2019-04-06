@@ -70,10 +70,10 @@ namespace Lava.Engine
         /// </summary>
         internal PerspectiveCamera(Vector3 pos, Vector3 forward, Vector3 up, float fov, float aspect, float near, float far)
         {
-            FoV = fov;
-            Aspect = aspect;
-            NearPlane = near;
-            FarPlane = far;
+            this.fov = fov;
+            this.aspect = aspect;
+            nearPlane = near;
+            farPlane = far;
 
             ComputeProjection();
             SetupCamera(pos, pos - forward, up);

@@ -46,7 +46,7 @@ namespace Demo
             //uint[] i = new uint[3] { 0, 1, 2 };
 
             //uint tex = Texture.Load2D(Settings.TextureDirPath + "\\texture.jpg");
-            uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky2.hdr");
+            uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky2.hdr", true);
             uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv2.hdr");
 
             uint tex = Texture.FromColor(Color.FromHex("#7FFF00"));

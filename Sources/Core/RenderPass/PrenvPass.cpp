@@ -34,21 +34,20 @@ namespace Engine
 		mCountVBO = skyBox.size();
 		mMaterial = g_MaterialManager.NewMaterial("prenv");
 
-		mPrefEnvMapFormat = vk::Format::eR16G16B16A16Sfloat;
-		constexpr uint32_t dim = 512;
-		mNumMips = static_cast<uint32_t>(std::floor(std::log2(dim))) + 1;
+		//constexpr uint32_t dim = 512;
+		//mNumMips = static_cast<uint32_t>(std::floor(std::log2(dim))) + 1;
 
-		mPrefilterdEnvMapIndex = g_TextureManager.CreateCubeMapTexture(dim, dim, 1, mNumMips,
-			vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
-			VMA_MEMORY_USAGE_GPU_ONLY, 0, mPrefEnvMapFormat);
-		mPrefilterdEnvMap.mSampler = g_TextureManager.CreateSamplerPrenv(mNumMips);
-		mPrefilterdEnvMap = TextureAt(mPrefilterdEnvMapIndex);
+		//mPrefilterdEnvMapIndex = g_TextureManager.CreateCubeMapTexture(dim, dim, 1, mNumMips,
+		//	vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
+		//	VMA_MEMORY_USAGE_GPU_ONLY, 0, mPrefEnvMapFormat);
+		//mPrefilterdEnvMap.mSampler = g_TextureManager.CreateSamplerPrenv(mNumMips);
+		//mPrefilterdEnvMap = TextureAt(mPrefilterdEnvMapIndex);
 
-		uint32_t index = g_TextureManager.CreateTexture2D(dim, dim, 1, 1,
-			vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
-			VMA_MEMORY_USAGE_GPU_ONLY, 0, mPrefEnvMapFormat);
-		mOffscreen = TextureAt(index);
-		// TODO: maybe layout transition here?
+		//uint32_t index = g_TextureManager.CreateTexture2D(PrenvPassResources::DIM, PrenvPassResources::DIM, 1, 1,
+		//	vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,
+		//	VMA_MEMORY_USAGE_GPU_ONLY, 0, PrenvPassResources::FORMAT);
+		//mOffscreen = TextureAt(index);
+		//// TODO: maybe layout transition here?
 	}
 
 	void PrenvPass::Destroy()
@@ -77,7 +76,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			1, &waitSem,
 			mWaitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			1, &signalSem
 		);
 		return submitInfo;
@@ -88,7 +87,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			0, nullptr,
 			mWaitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			1, &signalSem
 		);
 		return submitInfo;
@@ -100,7 +99,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			1, &waitSem,
 			waitStages.data(),
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			0, nullptr
 		);
 		return submitInfo;
@@ -111,7 +110,7 @@ namespace Engine
 		vk::SubmitInfo submitInfo(
 			0, nullptr,
 			nullptr,
-			1, &mCommandBuffer[0],
+			1, &mRes->mCmdBuffer,
 			0, nullptr
 		);
 		return submitInfo;
@@ -123,13 +122,13 @@ namespace Engine
 		GDevice.WaitForFence(g_RenderpassManager.GetFenceAt(1));
 		DestroyRenderPass();
 		DestroyCommandPool();
-		DestroyFramebuffers();
+		//DestroyFramebuffers();
 	}
 
 	void PrenvPass::CreateRenderPass()
 	{
 		vk::AttachmentDescription colorAttachment({},
-			mPrefEnvMapFormat,
+			PrenvPassResources::FORMAT,
 			vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eClear,
 			vk::AttachmentStoreOp::eStore,
@@ -172,7 +171,7 @@ namespace Engine
 
 	void PrenvPass::CreateFramebuffers()
 	{
-		mFramebuffer.resize(1);
+		/*mFramebuffer.resize(1);
 		
 		vk::ImageView imageViews[] = { mOffscreen.mImageView };
 
@@ -185,7 +184,7 @@ namespace Engine
 			1);
 
 		vk::Framebuffer fbuff = g_vkDevice.createFramebuffer(info);
-		mFramebuffer[0] = fbuff;
+		mFramebuffer[0] = fbuff;*/
 	}
 
 	void PrenvPass::CreateCommandPoolAndBuffer()
@@ -196,18 +195,21 @@ namespace Engine
 			GRAPHICS_FAMILY_INDEX);
 		mCommandPool = g_vkDevice.createCommandPool(info);
 
-		vk::CommandBufferAllocateInfo allocInfo(
+		//! This is created in PrenvPassResources
+		/*vk::CommandBufferAllocateInfo allocInfo(
 			mCommandPool,
 			vk::CommandBufferLevel::ePrimary,
 			(uint32_t)mFramebuffer.size());
 
-		mCommandBuffer = g_vkDevice.allocateCommandBuffers(allocInfo);
+		mCommandBuffer = g_vkDevice.allocateCommandBuffers(allocInfo);*/
 	}
 
 	void PrenvPass::RecordCommandBuffer()
 	{
-		vk::CommandBuffer& cmdBuf = mCommandBuffer[0];
-		uint32_t dim = mOffscreen.mWidth;
+		THROW_IF(mRes == nullptr, "Resources are null for this renderpass!");
+
+		vk::CommandBuffer cmdBuf = mRes->mCmdBuffer;
+		uint32_t dim = mRes->mOffscreen.mWidth;
 
 		vk::CommandBufferBeginInfo beginInfo(
 			vk::CommandBufferUsageFlagBits::eSimultaneousUse |
@@ -221,7 +223,7 @@ namespace Engine
 
 		vk::RenderPassBeginInfo renderPassInfo(
 			mRenderPass,
-			mFramebuffer[0],
+			mRes->mFramebuffer,
 			vk::Rect2D({ 0, 0 }, { dim, dim }),
 			1,
 			clearValues);
@@ -233,8 +235,8 @@ namespace Engine
 		cmdBuf.setScissor(0, { scissor });
 
 		{ // Prepare prenv cube map for transfer operation
-			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mNumMips, 0, 6);
-			g_TextureManager.TransitionImageLayout(cmdBuf, mPrefilterdEnvMap.mImage,
+			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mRes->mNumMips, 0, 6);
+			g_TextureManager.TransitionImageLayout(cmdBuf, mRes->mPrefilterdEnvMap.mImage,
 				vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, imageRange);
 		}
 
@@ -250,9 +252,9 @@ namespace Engine
 		PrenvPS prenvPS;
 		prenvPS.numSamples = 32u;
 
-		for (uint32_t m = 0; m < mNumMips; m++)
+		for (uint32_t m = 0; m < mRes->mNumMips; m++)
 		{
-			prenvPS.roughness = (float)m / (float)(mNumMips - 1);
+			prenvPS.roughness = (float)m / (float)(mRes->mNumMips - 1);
 			for (uint32_t f = 0; f < 6; f++)
 			{
 				viewport.width = static_cast<float>(dim * std::pow(0.5f, m));
@@ -262,7 +264,7 @@ namespace Engine
 				cmdBuf.beginRenderPass(renderPassInfo,
 					vk::SubpassContents::eInline);
 
-				skyPS.ViewProj = mCubeMatrices[f];
+				skyPS.ViewProj = mRes->mCubeMatrices[f];
 
 				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(SkyPS), &skyPS);
 				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS), &prenvPS);
@@ -282,7 +284,7 @@ namespace Engine
 
 				{ // Prepare offscreen image for transfer into cube face
 					vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-					g_TextureManager.TransitionImageLayout(cmdBuf, mOffscreen.mImage, vk::ImageLayout::eColorAttachmentOptimal,
+					g_TextureManager.TransitionImageLayout(cmdBuf, mRes->mOffscreen.mImage, vk::ImageLayout::eColorAttachmentOptimal,
 						vk::ImageLayout::eTransferSrcOptimal, imageRange);
 				}
 
@@ -294,21 +296,21 @@ namespace Engine
 					vk::Extent3D((uint32_t)viewport.width, (uint32_t)viewport.height, 1)
 				);
 
-				cmdBuf.copyImage(mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
-					mPrefilterdEnvMap.mImage, vk::ImageLayout::eTransferDstOptimal,
+				cmdBuf.copyImage(mRes->mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
+					mRes->mPrefilterdEnvMap.mImage, vk::ImageLayout::eTransferDstOptimal,
 					1, &copyRegion);
 
 				{ // Transfer offscreen image back to color attach optimal
 					vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
-					g_TextureManager.TransitionImageLayout(cmdBuf, mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
+					g_TextureManager.TransitionImageLayout(cmdBuf, mRes->mOffscreen.mImage, vk::ImageLayout::eTransferSrcOptimal,
 						vk::ImageLayout::eColorAttachmentOptimal, imageRange);
 				}
 			}
 		}
 
 		{ // Prepare prenv cube map for shader operations
-			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mNumMips, 0, 6);
-			g_TextureManager.TransitionImageLayout(cmdBuf, mPrefilterdEnvMap.mImage,
+			vk::ImageSubresourceRange imageRange(vk::ImageAspectFlagBits::eColor, 0, mRes->mNumMips, 0, 6);
+			g_TextureManager.TransitionImageLayout(cmdBuf, mRes->mPrefilterdEnvMap.mImage,
 				vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eShaderReadOnlyOptimal, imageRange);
 		}
 

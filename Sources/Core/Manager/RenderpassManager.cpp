@@ -2,6 +2,8 @@
 #include <Engine\Swapchain.h>
 #include <Engine\Device.h>
 #include <RenderPass\SkyPass.h>
+#include <RenderPass\PrenvPass.h>
+#include <RenderPass\BrdfPass.h>
 
 namespace Engine
 {
@@ -19,6 +21,10 @@ namespace Engine
 	void RenderpassManager::PostShaderLoadInit()
 	{
 		for (auto pass : mPass)
+		{
+			pass->PostShaderLoadInit();
+		}
+		for (auto pass : mPassTask)
 		{
 			pass->PostShaderLoadInit();
 		}
@@ -49,6 +55,10 @@ namespace Engine
 	{
 		AddPass<Engine::FramePass>(RPConst::FRAME);
 		AddPass<Engine::SkyPass>(RPConst::SKY);
+
+		uint32_t unused;
+		AddPassTask<Engine::PrenvPass>(unused, RPConst::PRENV);
+		AddPassTask<Engine::BrdfPass>(unused, RPConst::BRDF);
 		LOG_INFO("[LOG] Render passes init\n");
 	}
 

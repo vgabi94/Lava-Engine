@@ -42,13 +42,14 @@ namespace Engine
         }
 
 		template<typename T>
-		T* AddPassTask(uint32_t& index)
+		T* AddPassTask(uint32_t& index, const std::string& name)
 		{
 			RenderPass* pass = T::Allocate();
 			pass->Init();
 			if (mPostShader) pass->PostShaderLoadInit();
 			index = mPassTask.size();
 			mPassTask.push_back(pass);
+			mPassMap[name] = pass;
 			return static_cast<T*>(pass);
 		}
 
