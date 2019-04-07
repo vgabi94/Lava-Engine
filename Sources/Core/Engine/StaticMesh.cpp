@@ -40,7 +40,7 @@ namespace Engine
     {
         Assimp::Importer importer;
         const aiScene* scene = importer.ReadFile(path,
-            aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs);
+            aiProcessPreset_TargetRealtime_Fast | aiProcess_FlipUVs | aiProcess_GenUVCoords);
 
         if (!scene || scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
         {

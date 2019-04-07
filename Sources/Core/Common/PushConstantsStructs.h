@@ -25,6 +25,7 @@ namespace Engine
 
 	struct PrenvPS
 	{
+		Matrix4 ViewProj;
 		float roughness;
 		unsigned int numSamples;
 	};

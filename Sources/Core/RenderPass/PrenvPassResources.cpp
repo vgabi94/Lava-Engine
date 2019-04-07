@@ -11,8 +11,9 @@ namespace Engine
 		mPrefilterdEnvMapIndex = g_TextureManager.CreateCubeMapTexture(DIM, DIM, 1, mNumMips,
 			vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferDst,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, FORMAT);
-		mPrefilterdEnvMap.mSampler = g_TextureManager.CreateSamplerPrenv(mNumMips);
-		mPrefilterdEnvMap = TextureAt(mPrefilterdEnvMapIndex);
+		auto& tex = TextureAt(mPrefilterdEnvMapIndex);
+		tex.mSampler = g_TextureManager.CreateSamplerPrenv(mNumMips);
+		mPrefilterdEnvMap = tex;
 
 		uint32_t index = g_TextureManager.CreateTexture2D(DIM, DIM, 1, 1,
 			vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc,

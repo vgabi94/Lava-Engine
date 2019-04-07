@@ -417,9 +417,7 @@ namespace Engine
 
 		if (shaderNames[0].find("filtercube") != std::string::npos)
 		{
-			pushRanges.clear(); // we don't need ObjPS here
-			pushRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eVertex, 0, sizeof(SkyPS)));
-			pushRanges.push_back(vk::PushConstantRange(vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS)));
+			pushRanges[0].size = sizeof(PrenvPS);
 		}
 
 		// Copy global sets from temp to this pipeline

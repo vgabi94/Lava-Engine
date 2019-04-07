@@ -96,7 +96,7 @@ namespace Lava.Engine
         /// <summary>
         /// No Vulkan clip correction applied
         /// </summary>
-        public Matrix4 ViewProjOpenGL
+        public Matrix4 ViewProjGL
         {
             get
             {
@@ -117,6 +117,17 @@ namespace Lava.Engine
             get
             {
                 return CLIP * Projection * new Matrix4(View.Upper3x3);
+            }
+        }
+
+        /// <summary>
+        /// No Vulkan clip correction applied
+        /// </summary>
+        public Matrix4 SkyViewProjGL
+        {
+            get
+            {
+                return Projection * new Matrix4(View.Upper3x3);
             }
         }
 

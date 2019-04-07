@@ -15,7 +15,7 @@ namespace Engine
         Vector3 mPosition;
         class World* mWorld;
 
-        virtual void Init() { }
+		virtual void Init() { mIsPBRSet = false; }
         void Destroy();
 
         virtual void Draw(vk::CommandBuffer cmdBuff);
@@ -24,5 +24,8 @@ namespace Engine
         void OnRemoveFromWorld();
 
         MEM_POOL_DECLARE(Entity);
+
+	private:
+		bool mIsPBRSet;
     };
 }

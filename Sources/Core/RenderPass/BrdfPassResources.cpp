@@ -9,8 +9,9 @@ namespace Engine
 		mBrdfLutIndex = g_TextureManager.CreateTexture2D(DIM, DIM, 1, 1,
 			vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eColorAttachment,
 			VMA_MEMORY_USAGE_GPU_ONLY, 0, FORMAT);
-		mBrdfLut = TextureAt(mBrdfLutIndex);
-		mBrdfLut.mSampler = g_TextureManager.CreateSamplerBrdf();
+		auto& tex = TextureAt(mBrdfLutIndex);
+		tex.mSampler = g_TextureManager.CreateSamplerBrdf();
+		mBrdfLut = tex;
 		mSemaphore = GDevice.CreateSemaphore();
 	}
 

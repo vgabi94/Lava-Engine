@@ -27,7 +27,7 @@
 #define DECL_IRRAD_PS layout(push_constant) uniform IrradPS { float deltaPhi; float deltaTheta; } g_Irrad
 
 // prefiltered environment map
-#define DECL_PRENV_PS layout(push_constant) uniform PrenvPS { float roughness; uint numSamples; } g_Prenv
+#define DECL_PRENV_PS layout(push_constant) uniform PrenvPS { mat4 ViewProj; float roughness; uint numSamples; } g_Prenv
 
 #define PI 3.1415926535897932384626433832795
 

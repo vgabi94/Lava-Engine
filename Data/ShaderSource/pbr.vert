@@ -16,8 +16,8 @@ OUT(2, vec2, outUV);
 
 void main() 
 {
-	outWorldPos = vec3(g_Obj.Model * vec4(inPos, 1.0));
-	outNormal = mat3(g_Obj.Model) * inNormal;
+	outWorldPos = (g_Obj.Model * vec4(inPos, 1.0)).xyz;
+	outNormal = (g_Obj.Model * vec4(inNormal, 0)).xyz;
 	outUV = inUV;
 	outUV.t = 1.0 - inUV.t;
 	gl_Position =  g_Obj.MVP * vec4(inPos, 1.0);

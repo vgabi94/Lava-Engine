@@ -27,8 +27,8 @@ namespace Engine
 
 	struct IBLProbeInfo
 	{
+		Matrix4 matrices[6];
 		Vector3 position;
-		Matrix4* matrices;
 	};
 
 	struct IBLProbe

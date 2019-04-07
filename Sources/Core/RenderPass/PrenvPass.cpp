@@ -245,10 +245,6 @@ namespace Engine
 
 		mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrTex);
 
-		SkyPS skyPS;
-		skyPS.exposure = CurrentWorld->mSkySettings.exposure;
-		skyPS.gamma = CurrentWorld->mSkySettings.gamma;
-
 		PrenvPS prenvPS;
 		prenvPS.numSamples = 32u;
 
@@ -264,10 +260,10 @@ namespace Engine
 				cmdBuf.beginRenderPass(renderPassInfo,
 					vk::SubpassContents::eInline);
 
-				skyPS.ViewProj = mRes->mCubeMatrices[f];
+				prenvPS.ViewProj = mRes->mCubeMatrices[f];
 
-				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex, 0, sizeof(SkyPS), &skyPS);
-				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS), &prenvPS);
+				cmdBuf.pushConstants(pipe.mPipelineLayout, vk::ShaderStageFlagBits::eVertex 
+					| vk::ShaderStageFlagBits::eFragment, 0, sizeof(PrenvPS), &prenvPS);
 
 				cmdBuf.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 

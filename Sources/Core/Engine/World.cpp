@@ -106,6 +106,8 @@ namespace Engine
 		auto& frameConsts = g_ResourceManager.GetFrameConstsBuffer();
 		frameConsts.Get().ambientLight = mSkySettings.ambient;
 		frameConsts.Get().numLights = mLightInfo.size();
+		frameConsts.Get().exposure = mSkySettings.exposure;
+		frameConsts.Get().gamma = mSkySettings.gamma;
 		frameConsts.Commit();
 	}
 

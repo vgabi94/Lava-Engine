@@ -60,6 +60,8 @@ namespace Engine
         {
             std::vector<vk::WriteDescriptorSet> writeDescSets;
             writeDescSets.resize(mUniforms.size());
+			std::vector<vk::DescriptorImageInfo> imageInfo;
+			imageInfo.resize(mUniforms.size());
             
             for (size_t i = 0; i < mUniforms.size(); i++)
             {
@@ -67,16 +69,25 @@ namespace Engine
                     mUniforms[i].mType == vk::DescriptorType::eSampledImage ||
                     mUniforms[i].mType == vk::DescriptorType::eSampler)
                 {
-                    Texture tex = TextureAt(std::any_cast<uint32_t>(mUniforms[i].mValue));
-                    vk::DescriptorImageInfo imageInfo(tex.mSampler, tex.mImageView,
-                        vk::ImageLayout::eShaderReadOnlyOptimal);
+					if (mUniforms[i].mValue.has_value())
+					{
+						Texture tex = TextureAt(std::any_cast<uint32_t>(mUniforms[i].mValue));
 
-                    writeDescSets[i].descriptorCount = 1;
-                    writeDescSets[i].descriptorType = mUniforms[i].mType;
-                    writeDescSets[i].dstArrayElement = 0;
-                    writeDescSets[i].dstBinding = static_cast<uint32_t>(i);
-                    writeDescSets[i].dstSet = mDescSet;
-                    writeDescSets[i].pImageInfo = &imageInfo;
+						imageInfo[i].imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+						imageInfo[i].sampler = tex.mSampler;
+						imageInfo[i].imageView = tex.mImageView;
+
+						writeDescSets[i].descriptorCount = 1;
+						writeDescSets[i].descriptorType = mUniforms[i].mType;
+						writeDescSets[i].dstArrayElement = 0;
+						writeDescSets[i].dstBinding = static_cast<uint32_t>(i);
+						writeDescSets[i].dstSet = mDescSet;
+						writeDescSets[i].pImageInfo = &imageInfo[i];
+					}
+					else
+					{
+						LOG_INFO("Trying to bind uniform [{}] without value!\n", i);
+					}
                 }
                 else // assume buffer
                 {

@@ -31,14 +31,13 @@ namespace Engine
             | vk::ShaderStageFlagBits::eFragment,
             0, sizeof(ObjPS), &pc);
 
-		static bool pbrUpdated = false; // TODO remove if more IBLProbes
-		if (!pbrUpdated && mMaterial->mPipeType == "pbr")
+		if (!mIsPBRSet && mMaterial->mPipeType == "pbr")
 		{
 			auto& iblProbe = CurrentWorld->GetNearestIBLProbe(mPosition);
 			mMaterial->UpdateUniform(0, CurrentWorld->mSkySettings.hdrEnv);
 			mMaterial->UpdateUniform(1, iblProbe.GetBrdfMap());
 			mMaterial->UpdateUniform(2, iblProbe.GetPrefEnvMap());
-			pbrUpdated = true;
+			mIsPBRSet = true;
 		}
 
         mMaterial->Bind(cmdBuff);

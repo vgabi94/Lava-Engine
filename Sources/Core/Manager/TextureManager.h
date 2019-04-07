@@ -83,7 +83,7 @@ namespace Engine
 			vk::ImageLayout oldLayout = vk::ImageLayout::eTransferDstOptimal,
 			vk::ImageLayout newLayout = vk::ImageLayout::eShaderReadOnlyOptimal*/);
 
-        const Texture& GetTexture(uint32_t index) const
+        Texture& GetTexture(uint32_t index)
         {
             assert(index < mTexture.size());
             return mTexture[index];

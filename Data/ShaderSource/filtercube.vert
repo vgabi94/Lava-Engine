@@ -4,7 +4,7 @@
 #include "common.h"
 
 DECL_POSITION;
-DECL_SKY_PS;
+DECL_PRENV_PS;
 
 IN(0, vec3, inPos);
 OUT(0, vec3, outUVW);
@@ -12,5 +12,5 @@ OUT(0, vec3, outUVW);
 void main() 
 {
 	outUVW = inPos;
-	gl_Position = g_Sky.ViewProj * vec4(inPos, 1.0);
+	gl_Position = g_Prenv.ViewProj * vec4(inPos, 1.0);
 }

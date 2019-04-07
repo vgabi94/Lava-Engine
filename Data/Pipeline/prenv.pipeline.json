@@ -4,5 +4,6 @@
     "depthCompareOp": "lequal",
     "depthTestEnable": false,
     "depthWriteEnable": false,
+    "cullMode" : "None",
     "renderPass" : "prenvPass"
 }

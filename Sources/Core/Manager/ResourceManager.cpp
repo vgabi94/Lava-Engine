@@ -146,6 +146,7 @@ namespace Engine
 	void ResourceManager::ExecuteIBLPasses()
 	{
 		if (mIBLdone) return;
+		LOG_INFO("Starting IBL passes.\n");
 
 		//? TODO irrad ?
 
@@ -226,6 +227,7 @@ namespace Engine
 		g_vkDevice.destroyFence(fence2);
 
 		mIBLdone = true;
+		LOG_INFO("IBL passes execution done.\n");
 	}
 
 	uint32_t ResourceManager::GetPrefEnvMap(uint32_t ind) const
