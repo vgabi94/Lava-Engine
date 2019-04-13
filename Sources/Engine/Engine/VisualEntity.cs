@@ -48,6 +48,9 @@ namespace Lava.Engine
         {
             NativePtr = CreateEntity_Native();
             Transform = AddComponent<Transform>();
+            Transform.Position = Vector3.One * (Random.Range01() + 0.001f);
+            Transform.Scale = Vector3.One;
+            Transform.Rotation = Quaternion.Identity;
             IsStatic = false;
         }
 

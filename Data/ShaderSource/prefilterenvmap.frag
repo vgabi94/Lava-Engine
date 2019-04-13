@@ -48,7 +48,7 @@ vec3 prefilterEnvMap(vec3 R, float roughness)
 			float mipLevel = roughness == 0.0 ? 0.0 : max(0.5 * log2(omegaS / omegaP) + 1.0, 0.0f);
 			//color += textureLod(samplerEnv, L, mipLevel).rgb * dotNL;
 			vec2 uv = SampleSphericalMap(L);
-    		uv.y = 1.0 - uv.y;
+    		uv = 1.0 - uv;
 			color += textureLod(samplerEnv, uv, mipLevel).rgb * dotNL;
 			totalWeight += dotNL;
 

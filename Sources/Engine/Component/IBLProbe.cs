@@ -24,21 +24,20 @@ namespace Lava.Engine
             const float aspect = 1f;
             float fov = Mathf.Radians(90f);
 
-            PerspectiveCamera posZ = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
+            PerspectiveCamera posZ = new PerspectiveCamera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
 
             PerspectiveCamera negZ = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
-            negZ.Rotate(180f, Vector3.UnitX);
 
             PerspectiveCamera posX = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
-            posX.Rotate(-90f, Vector3.UnitY);
+            posX.Rotate(90f, Vector3.UnitY);
 
             PerspectiveCamera negX = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
-            negX.Rotate(90f, Vector3.UnitY);
+            negX.Rotate(-90f, Vector3.UnitY);
 
-            PerspectiveCamera posY = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
+            PerspectiveCamera posY = new PerspectiveCamera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
             posY.Rotate(90f, Vector3.UnitX);
 
-            PerspectiveCamera negY = new PerspectiveCamera(Vector3.Zero, Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
+            PerspectiveCamera negY = new PerspectiveCamera(Vector3.Zero, -Vector3.UnitZ, Vector3.UnitY, fov, aspect, near, far);
             negY.Rotate(-90f, Vector3.UnitX);
 
             // Cube matrices

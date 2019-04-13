@@ -53,22 +53,32 @@ namespace Demo
             StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
             StaticMesh mesh2 = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
             StaticMesh blocuriMesh = new StaticMesh(Settings.ModelsDirPath + "\\blocuri.obj");
+            StaticMesh crate1 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
+            StaticMesh crate2 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
             //StaticMesh mesh = new StaticMesh(v, v.Length, i, i.Length);
 
             Material material = new Material("phong");
             material.SetUniform(0, tex);
             Material material2 = new Material("phong");
             material2.SetUniform(0, tex);
-            Material material3 = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
-            //material3.SetUniform(0, tex);
+            Material material3 = new Material("phong");
+            material3.SetUniform(0, tex);
+            Material material4 = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
+            Material material5 = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
 
             VisualEntity bunny1 = new VisualEntity(mesh, material);
             VisualEntity bunny2 = new VisualEntity(mesh2, material2);
             VisualEntity blocuri = new VisualEntity(blocuriMesh, material3);
+            VisualEntity crate1Ent = new VisualEntity(crate1, material4);
+            VisualEntity crate2Ent = new VisualEntity(crate2, material5);
 
             Entity sun = Entity.NewWithComponent(out DirectionalLight sunLight);
             //TODO find true position on sky
             sunLight.Direction = new Vector3(1f, 0.8f, 0.5f);
+
+            var catTrans = crate1Ent.GetComponent<Transform>();
+            catTrans.Position += Vector3.UnitY * -10f + Vector3.UnitX * -5f;
+            catTrans.Scale *= 1f;
 
             var trans = bunny2.GetComponent<Transform>();
             trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
@@ -105,8 +115,10 @@ namespace Demo
             world.AddEntity(bunny1);
             world.AddEntity(bunny2);
             world.AddEntity(camEnt);
-            world.AddEntity(blocuri);
+            //world.AddEntity(blocuri);
             world.AddEntity(sun);
+            world.AddEntity(crate1Ent);
+            world.AddEntity(crate2Ent);
 
             for (int i = 0; i < 10; i++)
             {

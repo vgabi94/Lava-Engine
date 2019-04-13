@@ -81,10 +81,16 @@ namespace Lava.Engine
         [DllImport("LavaCore.dll")]
         public static extern void PostShaderLoadInitialize();
 
+        // ------------------- CALLBACKS --------------------- //
+        private static Callback updateCallback;
+        private static FramebufferCallback framebufferCallback;
+
         private static void RegisterEvents()
         {
-            RegisterUpdateCallback(EventManager.OnUpdate);
-            RegisterFramebufferResizeCallback(EventManager.OnFramebufferResize);
+            updateCallback = new Callback(EventManager.OnUpdate);
+            framebufferCallback = new FramebufferCallback(EventManager.OnFramebufferResize);
+            RegisterUpdateCallback(updateCallback);
+            RegisterFramebufferResizeCallback(framebufferCallback);
         }
 
 #if LAVA_EDITOR
