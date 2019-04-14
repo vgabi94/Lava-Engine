@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "mahogfloor/basecolor.png",
+    "normalMap": "mahogfloor/normal.png",
+    "aoMap": "mahogfloor/ao.png",
+    "metallicMap": "black",
+    "roughnessMap": "mahogfloor/roughness.png"
+}

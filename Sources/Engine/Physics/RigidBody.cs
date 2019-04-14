@@ -24,7 +24,7 @@ namespace Lava.Physics
             this.bounciness = bounciness;
         }
 
-        public PhysicsMaterial() : this(0.3f, 0f, 0.5f) { }
+        public PhysicsMaterial() : this(0.5f, 0.1f, 0.05f) { }
     }
 
     public enum BodyType
@@ -61,7 +61,35 @@ namespace Lava.Physics
         [DllImport("LavaCore.dll")]
         private static extern void ApplyTorque_Native(IntPtr rb, Mathematics.Vector3 torque);
 
+        [DllImport("LavaCore.dll")]
+        private static extern void SetLinearDamping_Native(IntPtr rb, float damping);
+
+        [DllImport("LavaCore.dll")]
+        private static extern void SetAngularDamping_Native(IntPtr rb, float damping);
+
         public IntPtr NativePtr { get; internal set; }
+
+        public float AngularDamping
+        {
+            get => angularDamping;
+            set
+            {
+                angularDamping = value;
+                SetAngularDamping_Native(NativePtr, value);
+            }
+        }
+        private float angularDamping;
+
+        public float LinearDamping
+        {
+            get => linearDamping;
+            set
+            {
+                linearDamping = value;
+                SetLinearDamping_Native(NativePtr, value);
+            }
+        }
+        private float linearDamping;
 
         public float Mass
         {
@@ -90,6 +118,8 @@ namespace Lava.Physics
         }
         private BodyType bodyType;
 
+        public UpdateRigidBodyCallback UpdateCallback { get; set; }
+
         public Mathematics.Vector3 Position
         {
             get { return position; }
@@ -114,6 +144,8 @@ namespace Lava.Physics
             bodyType = BodyType.Dynamic;
             enabledGravity = true;
             material = new PhysicsMaterial();
+            angularDamping = 0.05f;
+            linearDamping = 0f;
             shapes = new List<CollisionShape>();
         }
 

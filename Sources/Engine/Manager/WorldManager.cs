@@ -19,12 +19,18 @@ namespace Lava.Engine
         //[DllImport("LavaCore.dll")]
         //private static extern void SetViewProjection(Matrix4 vp);
 
+        // ------------- CALLBACKS --------------- //
+        private static Callback physicsUpdateCallback;
+
         public static World CreateWorld(bool makeCurrent = true, bool hasPhysics = true)
         {
             World world = new World(makeCurrent, hasPhysics);
             currentWorld = world;
-            if(hasPhysics)
-                SetPhysicsCallback_Native(world.PhysicsWorld.NativePtr, EventManager.OnPhysicsUpdate);
+            if (hasPhysics)
+            {
+                physicsUpdateCallback = new Callback(EventManager.OnPhysicsUpdate);
+                SetPhysicsCallback_Native(world.PhysicsWorld.NativePtr, physicsUpdateCallback);
+            }
             worlds.Add(world);
             return world;
         }
@@ -36,7 +42,10 @@ namespace Lava.Engine
             {
                 SetCurrentWorld_Native(value.NativePtr);
                 if (value.PhysicsWorld != null)
-                    SetPhysicsCallback_Native(value.PhysicsWorld.NativePtr, EventManager.OnPhysicsUpdate);
+                {
+                    physicsUpdateCallback = new Callback(EventManager.OnPhysicsUpdate);
+                    SetPhysicsCallback_Native(value.PhysicsWorld.NativePtr, physicsUpdateCallback);
+                }
                 currentWorld = value;
             }
         }

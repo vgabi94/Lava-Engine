@@ -27,6 +27,8 @@ namespace Engine
         UpdateRigidBodyCBack callback)
     {
         auto rb = mDynamics.createRigidBody(transform);
+		rb->setAngularDamping(0.05f);
+		rb->setLinearDamping(0.0f);
         // Watch out for deletion from managed code!
         mState.push_front(State{ rb, callback });
         return rb;
@@ -143,6 +145,16 @@ extern "C"
     {
         rb->applyTorque(torque);
     }
+
+	LAVA_API void SetLinearDamping_Native(rp3d::RigidBody* rb, float damping)
+	{
+		rb->setLinearDamping(damping);
+	}
+
+	LAVA_API void SetAngularDamping_Native(rp3d::RigidBody* rb, float damping)
+	{
+		rb->setAngularDamping(damping);
+	}
 
     // -------- Collision Shapes -------- //
     LAVA_API void SetShapeTransform_Native(rp3d::ProxyShape* proxy, rp3d::Vector3 pos, rp3d::Quaternion rot)

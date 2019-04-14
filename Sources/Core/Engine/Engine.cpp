@@ -12,6 +12,7 @@
 #include <Manager\ResourceManager.h>
 #include <Manager\MaterialManager.h>
 #include <Manager\PrimitiveManager.h>
+#include <Manager\AudioManager.h>
 
 #define EngineGlobals Engine::g_EngineSettings
 
@@ -26,6 +27,7 @@ namespace Engine
         CreateWindow(params);
         //g_TaskScheduler.Init();
 		g_PrimitiveManager.Init();
+		g_AudioManager.Init();
         InitGraphics();
     }
 
@@ -44,6 +46,7 @@ namespace Engine
         g_WorldManager.Destroy();
         DestroyGraphics();
 		g_PrimitiveManager.Destroy();
+		g_AudioManager.Destroy();
         //g_TaskScheduler.Destroy();
         glfwDestroyWindow(mWindow);
         glfwTerminate();

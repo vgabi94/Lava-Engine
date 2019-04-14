@@ -73,6 +73,7 @@ namespace LavaEngine
             conf.LibraryFiles.Add("vulkan-1");
             conf.LibraryFiles.Add("glfw3");
             conf.LibraryFiles.Add("assimp");
+            conf.LibraryFiles.Add("dsound");
 
             conf.Defines.Add("_CRT_SECURE_NO_WARNINGS");
             conf.Defines.Add("LAVA_EXPORTS");

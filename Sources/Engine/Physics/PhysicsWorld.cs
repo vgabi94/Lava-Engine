@@ -28,21 +28,24 @@ namespace Lava.Physics
         public RigidBody CreateRigidBody(Mathematics.Vector3 position, Mathematics.Quaternion rotation)
         {
             RigidBody rb = new RigidBody(position, rotation);
-            rb.NativePtr = CreateRigidBody_Native(NativePtr, position, rotation, rb.OnRigidBodyUpdate);
+            rb.UpdateCallback = new UpdateRigidBodyCallback(rb.OnRigidBodyUpdate);
+            rb.NativePtr = CreateRigidBody_Native(NativePtr, position, rotation, rb.UpdateCallback);
             return rb;
         }
 
         public RigidBody CreateRigidBody(Mathematics.Vector3 position)
         {
             RigidBody rb = new RigidBody(position, Mathematics.Quaternion.Identity);
-            rb.NativePtr = CreateRigidBody_Native(NativePtr, position, Mathematics.Quaternion.Identity, rb.OnRigidBodyUpdate);
+            rb.UpdateCallback = new UpdateRigidBodyCallback(rb.OnRigidBodyUpdate);
+            rb.NativePtr = CreateRigidBody_Native(NativePtr, position, Mathematics.Quaternion.Identity, rb.UpdateCallback);
             return rb;
         }
 
         public RigidBody CreateRigidBody()
         {
             RigidBody rb = new RigidBody();
-            rb.NativePtr = CreateRigidBody_Native(NativePtr, Mathematics.Vector3.Zero, Mathematics.Quaternion.Identity, rb.OnRigidBodyUpdate);
+            rb.UpdateCallback = new UpdateRigidBodyCallback(rb.OnRigidBodyUpdate);
+            rb.NativePtr = CreateRigidBody_Native(NativePtr, Mathematics.Vector3.Zero, Mathematics.Quaternion.Identity, rb.UpdateCallback);
             return rb;
         }
     }
