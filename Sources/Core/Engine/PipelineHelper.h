@@ -94,7 +94,8 @@ namespace Engine
 
     static bool IsValidVertexType(const std::string& type)
     {
-        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt" || type == "VertexPos" || type == "None")
+        if (type == "Vertex" || type == "Vertex2D" || type == "VertexExt"
+			|| type == "VertexPos" || type == "VertexUI" || type == "None")
             return true;
         return false;
     }
@@ -150,6 +151,10 @@ namespace Engine
 		else if (type == "VertexPos")
 		{
 			VERTEX_INPUT_CREATE_INFO(VertexPos);
+		}
+		else if (type == "VertexUI")
+		{
+			VERTEX_INPUT_CREATE_INFO(VertexUI);
 		}
     }
 

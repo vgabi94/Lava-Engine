@@ -65,4 +65,14 @@ namespace Engine
 			: x(x), y(y), z(z), w(w) { }
 		Vector4Int(Vector3 v, int w) : Vector4Int(v.x, v.y, v.z, w) { }
 	};
+
+	struct Vector4Byte
+	{
+		unsigned char x, y, z, w;
+
+		Vector4Byte() : x(0), y(0), z(0), w(0) { }
+		Vector4Byte(unsigned char x, unsigned char y, unsigned char z, unsigned char w)
+			: x(x), y(y), z(z), w(w) { }
+		Vector4Byte(Vector3 v, unsigned char w) : Vector4Byte(v.x, v.y, v.z, w) { }
+	};
 }

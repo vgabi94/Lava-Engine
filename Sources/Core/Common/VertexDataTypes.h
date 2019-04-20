@@ -111,9 +111,37 @@ namespace Engine
 		}
 	};
 
+	struct VertexUI
+	{
+		Vector2 position;
+		Vector2 uv;
+		Vector4Byte color;
+
+		static vk::VertexInputBindingDescription GetBindingDescription(uint32_t binding = 0,
+			vk::VertexInputRate inputRate = vk::VertexInputRate::eVertex)
+		{
+			return vk::VertexInputBindingDescription(
+				binding,
+				sizeof(VertexUI),
+				inputRate
+			);
+		}
+
+		static std::array<vk::VertexInputAttributeDescription, 3> GetAttributeDescriptions(uint32_t binding = 0)
+		{
+			return std::array<vk::VertexInputAttributeDescription, 3>
+			{
+				vk::VertexInputAttributeDescription(0, binding, vk::Format::eR32G32Sfloat, offsetof(VertexUI, position)),
+				vk::VertexInputAttributeDescription(1, binding, vk::Format::eR32G32Sfloat, offsetof(VertexUI, uv)),
+				vk::VertexInputAttributeDescription(2, binding, vk::Format::eR8G8B8A8Uint, offsetof(VertexUI, color))
+			};
+		}
+	};
+
     typedef std::vector<Vertex> VertexList;
     typedef std::vector<VertexPos> VertexPosList;
     typedef std::vector<Vertex2D> Vertex2DList;
     typedef std::vector<VertexExt> VertexExtList;
+    typedef std::vector<VertexUI> VertexUIList;
     typedef std::vector<uint32_t> IndexList;
 }

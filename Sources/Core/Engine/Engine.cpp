@@ -13,6 +13,7 @@
 #include <Manager\MaterialManager.h>
 #include <Manager\PrimitiveManager.h>
 #include <Manager\AudioManager.h>
+#include <Manager\UIManager.h>
 
 #define EngineGlobals Engine::g_EngineSettings
 
@@ -59,6 +60,9 @@ namespace Engine
 #ifdef SINGLE_THREAD
         g_TaskScheduler.Execute();
 #endif
+		g_UIManager.MirrorInput();
+		g_UIManager.SetupDrawBuffers();
+
         g_BufferManager.ExecuteOperations();
         g_TextureManager.ExecuteOperations();
 
@@ -67,6 +71,8 @@ namespace Engine
 		g_ResourceManager.ExecuteIBLPasses();
         
         GSwapchain.Update();
+
+		g_UIManager.FreeDrawBuffers();
     }
     
     void Engine::CreateWindow(WindowParams params)
@@ -133,11 +139,13 @@ namespace Engine
         g_ShaderManager.Init();
         g_PipelineManager.Init();
 		g_MaterialManager.Init();
+		g_UIManager.Init();
     }
 
     void Engine::DestroyGraphics()
     {
         using namespace Vulkan;
+		g_UIManager.Destroy();
 		g_MaterialManager.Destroy();
         g_ResourceManager.Destroy();
         g_TextureManager.Destroy();

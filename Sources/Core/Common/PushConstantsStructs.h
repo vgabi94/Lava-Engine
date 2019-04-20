@@ -29,4 +29,9 @@ namespace Engine
 		float roughness;
 		unsigned int numSamples;
 	};
+
+	struct UiPS
+	{
+		Matrix4 Ortho;
+	};
 }

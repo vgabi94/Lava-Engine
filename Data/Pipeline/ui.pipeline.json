@@ -1,0 +1,9 @@
+{
+    "vertexInput": "VertexUI",
+    "shaders": ["ui.vert", "ui.frag"],
+    "depthCompareOp": "lequal",
+    "depthTestEnable": false,
+    "depthWriteEnable": false,
+    "cullMode" : "None",
+    "renderPass" : "uiPass"
+}

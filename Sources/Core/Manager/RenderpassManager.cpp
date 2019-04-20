@@ -4,6 +4,7 @@
 #include <RenderPass\SkyPass.h>
 #include <RenderPass\PrenvPass.h>
 #include <RenderPass\BrdfPass.h>
+#include <RenderPass\UIRenderPass.h>
 
 namespace Engine
 {
@@ -54,6 +55,7 @@ namespace Engine
 	void RenderpassManager::InitPasses()
 	{
 		AddPass<Engine::FramePass>(RPConst::FRAME);
+		AddPass<Engine::UIRenderPass>(RPConst::UI);
 		AddPass<Engine::SkyPass>(RPConst::SKY);
 
 		uint32_t unused;

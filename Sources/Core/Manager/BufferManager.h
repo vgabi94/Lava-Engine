@@ -78,7 +78,7 @@ namespace Engine
             mStagBuffer.push_back(stagingBuffer);
             mStagBufferAllocation.push_back(stagAllocation);
 
-            CopyRequest req{ bufIndex, stagIndex };
+            CopyRequest req{ bufIndex, stagIndex, false };
             mCopyRequest.push(req);
 
             indexOffset.first = bufIndex;
@@ -119,18 +119,26 @@ namespace Engine
 			mStagBuffer.push_back(stagingBuffer);
 			mStagBufferAllocation.push_back(stagAllocation);
 
-			CopyRequest req{ bufIndex, stagIndex };
+			CopyRequest req{ bufIndex, stagIndex, false };
 			mCopyRequest.push(req);
 
 			return bufIndex;
 		}
+
+		IndexOffset AllocateUI(const std::vector<VertexUI>& verts, const std::vector<uint32_t>& idx,
+			vk::BufferUsageFlags flags = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer);
+
+		vk::Buffer GetUIBuffer() const { return mUIBuffer; }
+
+		void DeleteUI();
 
         VmaAllocator mAllocator;
         vk::Fence mBufferFence;
     private:
         struct CopyRequest
         {
-            uint32_t bufIndex, stagIndex;
+			uint32_t bufIndex, stagIndex;
+			bool ui;
         };
 
         typedef std::vector<vk::Buffer> BufferVector;
@@ -143,6 +151,11 @@ namespace Engine
         AllocationVector mBufferAllocation;
         BufferVector mStagBuffer;
         AllocationVector mStagBufferAllocation;
+
+		vk::Buffer mUIBuffer;
+		VmaAllocation mUIBufferAllocation;
+		vk::Buffer mUIBufferStag;
+		VmaAllocation mUIBufferStagAllocation;
 
         std::queue<CopyRequest> mCopyRequest;
 

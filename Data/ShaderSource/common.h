@@ -29,6 +29,8 @@
 // prefiltered environment map
 #define DECL_PRENV_PS layout(push_constant) uniform PrenvPS { mat4 ViewProj; float roughness; uint numSamples; } g_Prenv
 
+#define DECL_UI_PS layout(push_constant) uniform UiPS { mat4 Ortho; } g_UI
+
 #define PI 3.1415926535897932384626433832795
 
 #endif

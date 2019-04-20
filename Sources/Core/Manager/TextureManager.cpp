@@ -237,7 +237,58 @@ namespace Engine
 		return g_vkDevice.createImageView(imageViewCI);
 	}
 
-    uint32_t TextureManager::LoadTex2D(const char * path, bool genmips)
+	uint32_t TextureManager::LoadTex2DFromData(const void* data, int width, int height, int channels, bool genmips)
+	{
+		Texture tex;
+		tex.mDepth = 1;
+		tex.mWidth = (uint32_t)width;
+		tex.mHeight = (uint32_t)height;
+		tex.mChannels = (uint32_t)channels;
+		assert(data);
+		const stbi_uc* pixels = static_cast<const stbi_uc*>(data);
+		vk::DeviceSize imageSize = tex.mWidth * tex.mHeight * STBI_rgb_alpha;
+
+		uint32_t miplevels = 1;
+		if (genmips)
+			miplevels = static_cast<uint32_t>(std::floor(std::log2(std::max(tex.mWidth, tex.mHeight)))) + 1;
+
+		VmaAllocation stagAllocation;
+		VmaAllocationInfo stagAllocInfo;
+		vk::Buffer stagBuffer;
+
+		stagBuffer = g_BufferManager.CreateBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc,
+			VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, stagAllocation, &stagAllocInfo);
+
+		memcpy(stagAllocInfo.pMappedData, pixels, static_cast<size_t>(imageSize));
+
+		VmaAllocation imageAllocation;
+
+		vk::Extent3D extent((uint32_t)tex.mWidth, (uint32_t)tex.mHeight, (uint32_t)tex.mDepth);
+		tex.mImage = CreateImage2D(extent, miplevels,
+			vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+			VMA_MEMORY_USAGE_GPU_ONLY, 0, imageAllocation, nullptr);
+
+		tex.mImageView = CreateImageView2D(tex.mImage, miplevels, vk::Format::eR8G8B8A8Unorm);
+		tex.mSampler = CreateSampler();
+		tex.mImageAllocation = imageAllocation;
+		tex.mMipLevels = miplevels;
+		tex.mLayers = 1;
+
+		uint32_t index = mTexture.size();
+		mTexture.push_back(tex);
+		//mImageAllocation.push_back(imageAllocation);
+
+		UploadRequest req;
+		req.imageIndex = index;
+		req.stagBuffer = stagBuffer;
+		req.stagAllocation = stagAllocation;
+		req.genmips = genmips;
+		mUploadRequest.push_back(req);
+
+		return index;
+	}
+
+	uint32_t TextureManager::LoadTex2D(const char * path, bool genmips)
     {
         Texture tex;
         tex.mDepth = 1;

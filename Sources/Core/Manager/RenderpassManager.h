@@ -17,6 +17,7 @@ namespace Engine
 		static constexpr const char* SKY = "skyPass";
 		static constexpr const char* PRENV = "prenvPass";
 		static constexpr const char* BRDF = "brdfPass";
+		static constexpr const char* UI = "uiPass";
 	}
 
     class RenderpassManager

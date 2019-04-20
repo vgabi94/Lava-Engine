@@ -59,6 +59,7 @@ namespace Engine
 			vk::ImageAspectFlags aspectFlags = vk::ImageAspectFlagBits::eColor);
 
 		// ---- Loading functions ---- //
+		uint32_t LoadTex2DFromData(const void* data, int width, int height, int channels = 4, bool genmips = false);
         uint32_t LoadTex2D(const char* path, bool genmips = false);
 		uint32_t LoadTexHDR(const char* path, bool genmips = false);
 		// --------------------------- //
