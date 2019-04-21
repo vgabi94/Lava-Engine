@@ -420,6 +420,11 @@ namespace Engine
 			pushRanges[0].size = sizeof(PrenvPS);
 		}
 
+		if (shaderNames[0].find("ui") != std::string::npos)
+		{
+			pushRanges[0].size = sizeof(UiPS);
+		}
+
 		// Copy global sets from temp to this pipeline
 		for (auto i : temp.mGlobalSets)
 		{

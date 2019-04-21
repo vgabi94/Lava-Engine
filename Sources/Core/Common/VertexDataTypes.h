@@ -113,9 +113,9 @@ namespace Engine
 
 	struct VertexUI
 	{
-		Vector2 position;
-		Vector2 uv;
-		Vector4Byte color;
+		float position[2];
+		float uv[2];
+		unsigned char color[4];
 
 		static vk::VertexInputBindingDescription GetBindingDescription(uint32_t binding = 0,
 			vk::VertexInputRate inputRate = vk::VertexInputRate::eVertex)

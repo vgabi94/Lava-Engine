@@ -61,6 +61,7 @@ namespace Engine
         g_TaskScheduler.Execute();
 #endif
 		g_UIManager.MirrorInput();
+		g_UIManager.Update();
 		g_UIManager.SetupDrawBuffers();
 
         g_BufferManager.ExecuteOperations();

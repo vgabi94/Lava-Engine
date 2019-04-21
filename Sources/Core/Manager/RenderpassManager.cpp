@@ -55,8 +55,8 @@ namespace Engine
 	void RenderpassManager::InitPasses()
 	{
 		AddPass<Engine::FramePass>(RPConst::FRAME);
-		AddPass<Engine::UIRenderPass>(RPConst::UI);
 		AddPass<Engine::SkyPass>(RPConst::SKY);
+		AddPass<Engine::UIRenderPass>(RPConst::UI);
 
 		uint32_t unused;
 		AddPassTask<Engine::PrenvPass>(unused, RPConst::PRENV);

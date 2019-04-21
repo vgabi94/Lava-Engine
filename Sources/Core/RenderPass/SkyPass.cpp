@@ -81,7 +81,7 @@ namespace Engine
 			g_ResourceManager.GetDepthFormat(),
 			vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eLoad,
-			vk::AttachmentStoreOp::eDontCare,
+			vk::AttachmentStoreOp::eStore,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal,
@@ -96,7 +96,7 @@ namespace Engine
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eColorAttachmentOptimal,
-			vk::ImageLayout::ePresentSrcKHR
+			vk::ImageLayout::eColorAttachmentOptimal
 		);
 
 		vk::AttachmentReference colorAttachRef(0, vk::ImageLayout::eColorAttachmentOptimal);

@@ -18,6 +18,7 @@ namespace Engine
         InitVmaAllocator();
         CreateCopyPool();
         mBufferFence = GDevice.CreateFence();
+		mUIFence = GDevice.CreateFence();
         
         LOG_INFO("[LOG] BufferManager Init\n");
     }
@@ -28,59 +29,10 @@ namespace Engine
         vmaDestroyAllocator(mAllocator);
         g_vkDevice.destroyCommandPool(mCopyPool);
         g_vkDevice.destroyFence(mBufferFence);
+		g_vkDevice.destroyFence(mUIFence);
         
         LOG_INFO("[LOG] BufferManager Destroy\n");
     }
-
-	IndexOffset BufferManager::AllocateUI(const std::vector<VertexUI>& verts, const std::vector<uint32_t>& idx, vk::BufferUsageFlags flags)
-	{
-		vk::Buffer dataBuffer, stagingBuffer;
-		IndexOffset indexOffset;
-
-		// 1. Allocate the staging buffers
-		indexOffset.second = sizeof(VertexUI) * verts.size();
-		vk::DeviceSize size = indexOffset.second + sizeof(uint32_t) * idx.size();
-		assert(size > 0);
-
-		VmaAllocation stagAllocation;
-		VmaAllocationInfo stagAllocInfo;
-		stagingBuffer = CreateBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
-			VMA_MEMORY_USAGE_CPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT,
-			stagAllocation, &stagAllocInfo);
-
-		// 2. Copy the contents from vertices and indices to the staging buffers
-		memcpy(stagAllocInfo.pMappedData, verts.data(), indexOffset.second);
-		// Assume byte level
-		memcpy((char*)stagAllocInfo.pMappedData + indexOffset.second, idx.data(),
-			size - indexOffset.second);
-
-		// 3. Create the local device buffer
-		VmaAllocation bufAllocation;
-		dataBuffer = CreateBuffer(size, vk::BufferUsageFlagBits::eTransferDst | flags,
-			VMA_MEMORY_USAGE_GPU_ONLY, 0, bufAllocation, nullptr);
-
-		// 4. Update global arrays and create copy request
-		//uint32_t bufIndex = (uint32_t)mBuffer.size();
-		mUIBuffer = dataBuffer;
-		mUIBufferAllocation = bufAllocation;
-
-		//uint32_t stagIndex = (uint32_t)mStagBuffer.size();
-		mUIBufferStag = stagingBuffer;
-		mUIBufferStagAllocation = stagAllocation;
-
-		CopyRequest req{ (uint32_t)-1, (uint32_t)-1, true };
-		mCopyRequest.push(req);
-
-		indexOffset.first = -1;
-
-		return indexOffset;
-	}
-
-	void BufferManager::DeleteUI()
-	{
-		vmaDestroyBuffer(mAllocator, mUIBuffer, mUIBufferAllocation);
-		vmaDestroyBuffer(mAllocator, mUIBufferStag, mUIBufferStagAllocation);
-	}
 
 	void BufferManager::CreateCopyPool()
     {

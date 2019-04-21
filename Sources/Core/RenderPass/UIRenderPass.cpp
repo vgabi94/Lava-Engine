@@ -66,16 +66,16 @@ namespace Engine
 
 	void UIRenderPass::CreateRenderPass()
 	{
-		/*vk::AttachmentDescription depthAttachment({},
+		vk::AttachmentDescription depthAttachment({},
 			g_ResourceManager.GetDepthFormat(),
 			vk::SampleCountFlagBits::e1,
 			vk::AttachmentLoadOp::eLoad,
-			vk::AttachmentStoreOp::eStore,
+			vk::AttachmentStoreOp::eDontCare,
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal,
 			vk::ImageLayout::eDepthStencilAttachmentOptimal
-		);*/
+		);
 
 		vk::AttachmentDescription colorAttachment({},
 			GSwapchain.GetImageFormat(),
@@ -85,7 +85,7 @@ namespace Engine
 			vk::AttachmentLoadOp::eDontCare,
 			vk::AttachmentStoreOp::eDontCare,
 			vk::ImageLayout::eColorAttachmentOptimal,
-			vk::ImageLayout::eColorAttachmentOptimal
+			vk::ImageLayout::ePresentSrcKHR
 		);
 
 		vk::AttachmentReference colorAttachRef(0, vk::ImageLayout::eColorAttachmentOptimal);
@@ -104,9 +104,9 @@ namespace Engine
 			vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
 			{});
 
-		vk::AttachmentDescription attachments[] = { colorAttachment/*, depthAttachment */};
+		vk::AttachmentDescription attachments[] = { colorAttachment, depthAttachment };
 		vk::RenderPassCreateInfo renderPassInfo({},
-			1, attachments,
+			2, attachments,
 			1, &subpass, 1, &dependency
 		);
 
@@ -119,11 +119,11 @@ namespace Engine
 
 		for (size_t i = 0; i < mFramebuffer.size(); i++)
 		{
-			vk::ImageView imageViews[] = { GSwapchain.GetImageViewAt(i)/*, g_ResourceManager.GetDepthImageView()*/ };
+			vk::ImageView imageViews[] = { GSwapchain.GetImageViewAt(i), g_ResourceManager.GetDepthImageView() };
 
 			vk::FramebufferCreateInfo info({},
 				mRenderPass,
-				1,
+				2,
 				imageViews,
 				GSwapchain.GetExtent().width,
 				GSwapchain.GetExtent().height,
