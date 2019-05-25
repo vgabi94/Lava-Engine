@@ -4,6 +4,17 @@ using Lava.Mathematics;
 
 namespace Lava.Physics
 {
+    public struct CollisionInfoMarshal
+    {
+        Vector3 pointOfContact;
+    }
+
+    public struct CollisionInfo
+    {
+        Vector3 pointOfContact;
+        Lava.Engine.Component owner;
+    }
+
     public abstract class CollisionShape
     {
         [DllImport("LavaCore.dll")]
@@ -15,11 +26,19 @@ namespace Lava.Physics
         public Quaternion Rotation { get; set; }
         public float Mass { get; set; }
 
-        public CollisionShape(float mass)
+        public bool IsTrigger { get; private set; }
+
+        public CollisionShape(bool trigger, float mass)
         {
             Position = Vector3.Zero;
             Rotation = Quaternion.Identity;
             Mass = mass;
+            if (trigger)
+            {
+                onCollision = new CollisionCallback(OnCollision);
+                RegisterCollisionCallback();
+                IsTrigger = trigger;
+            }
         }
 
         public void SetLocalToBodyTransform()
@@ -28,7 +47,24 @@ namespace Lava.Physics
         }
 
         public abstract void CreateProxy(RigidBody rb);
+        public abstract void CreateProxyTrigger(CollisionBody cb);
         public abstract void DestroyProxy(RigidBody rb);
+        public abstract void DestroyProxyTrigger(CollisionBody rb);
+
+        protected abstract void RegisterCollisionCallback();
+
+        public delegate void CollisionHandler(CollisionInfo collisionInfo);
+        public event CollisionHandler CollisionEvent;
+
+        protected delegate void CollisionCallback(ref CollisionInfoMarshal collInfo);
+        protected CollisionCallback onCollision; 
+
+        protected void OnCollision(ref CollisionInfoMarshal collInfo)
+        {
+            CollisionInfo info = new CollisionInfo();
+            // TODO fill info
+            CollisionEvent?.Invoke(info);
+        }
     }
 
     public class BoxShape : CollisionShape
@@ -38,7 +74,14 @@ namespace Lava.Physics
             Vector3 pos, Quaternion rot, float mass);
 
         [DllImport("LavaCore.dll")]
+        private static extern IntPtr CreateBoxTrigger_Native(IntPtr cb, Vector3 halfExtents,
+            Vector3 pos, Quaternion rot);
+
+        [DllImport("LavaCore.dll")]
         private static extern IntPtr DestroyBoxShape_Native(IntPtr rb, IntPtr proxy);
+
+        [DllImport("LavaCore.dll")]
+        private static extern IntPtr DestroyBoxTrigger_Native(IntPtr cb, IntPtr proxy);
 
         public override void CreateProxy(RigidBody rb)
         {
@@ -50,24 +93,39 @@ namespace Lava.Physics
             DestroyBoxShape_Native(rb.NativePtr, NativePtr);
         }
 
+        public override void CreateProxyTrigger(CollisionBody cb)
+        {
+            CreateBoxTrigger_Native(cb.NativePtr, HalfExtent, Position, Rotation);
+        }
+
+        public override void DestroyProxyTrigger(CollisionBody cb)
+        {
+            DestroyBoxTrigger_Native(cb.NativePtr, NativePtr);
+        }
+
+        protected override void RegisterCollisionCallback()
+        {
+            throw new NotImplementedException();
+        }
+
         public Vector3 HalfExtent { get; private set; }
 
-        public BoxShape(float radius, float mass = 1f) : base(mass)
+        public BoxShape(float radius, bool trigger = false, float mass = 1f) : base(trigger, mass)
         {
             HalfExtent = new Vector3(radius);
         }
 
-        public BoxShape(float x, float y, float z, float mass = 1f) : base(mass)
+        public BoxShape(float x, float y, float z, bool trigger = false, float mass = 1f) : base(trigger, mass)
         {
             HalfExtent = new Vector3(x, y, z);
         }
 
-        public BoxShape(Vector3 halfExtent, float mass = 1f) : base(mass)
+        public BoxShape(Vector3 halfExtent, bool trigger = false, float mass = 1f) : base(trigger, mass)
         {
             HalfExtent = halfExtent;
         }
 
-        public BoxShape() : this(1f, 1f) { }
+        public BoxShape() : this(1f, false, 1f) { }
     }
 
     public class SphereShape : CollisionShape
@@ -81,12 +139,12 @@ namespace Lava.Physics
 
         public float Radius { get; private set; }
 
-        public SphereShape(float radius, float mass = 1f) : base(mass)
+        public SphereShape(float radius, bool trigger = false, float mass = 1f) : base(trigger, mass)
         {
             Radius = radius;
         }
 
-        public SphereShape() : this(1f, 1f) { }
+        public SphereShape() : this(1f, false, 1f) { }
 
         public override void CreateProxy(RigidBody rb)
         {
@@ -96,6 +154,21 @@ namespace Lava.Physics
         public override void DestroyProxy(RigidBody rb)
         {
             DestroySphereShape_Native(rb.NativePtr, NativePtr);
+        }
+
+        public override void CreateProxyTrigger(CollisionBody cb)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void DestroyProxyTrigger(CollisionBody rb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void RegisterCollisionCallback()
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -111,13 +184,13 @@ namespace Lava.Physics
         public float Radius { get; private set; }
         public float Height { get; private set; }
 
-        public CapsuleShape(float radius, float height, float mass = 1f) : base(mass)
+        public CapsuleShape(float radius, float height, bool trigger = false, float mass = 1f) : base(trigger, mass)
         {
             Radius = radius;
             Height = height;
         }
 
-        public CapsuleShape() : this(1f, 1f, 1f) { }
+        public CapsuleShape() : this(1f, 1f, false, 1f) { }
 
         public override void CreateProxy(RigidBody rb)
         {
@@ -127,6 +200,21 @@ namespace Lava.Physics
         public override void DestroyProxy(RigidBody rb)
         {
             DestroyCapsuleShape_Native(rb.NativePtr, NativePtr);
+        }
+
+        public override void CreateProxyTrigger(CollisionBody cb)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void DestroyProxyTrigger(CollisionBody rb)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected override void RegisterCollisionCallback()
+        {
+            throw new NotImplementedException();
         }
     }
 }

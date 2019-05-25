@@ -2,12 +2,25 @@
 
 #include <rp3d/reactphysics3d.h>
 #include <Common\Constants.h>
+#include <Common\MathTypes.h>
 #include <MemoryPool.h>
 #include <forward_list>
 
 namespace Engine
 {
-    typedef void(*UpdateRigidBodyCBack)(reactphysics3d::Vector3, reactphysics3d::Quaternion);
+	struct CollisionInfoMarshal
+	{
+		Vector3 pointOfContact;
+	};
+
+	typedef void(*UpdateBodyCBack)(reactphysics3d::Vector3, reactphysics3d::Quaternion);
+	typedef void(*CollisionCBack)(CollisionInfoMarshal&);
+
+	struct CollisionBody
+	{
+		reactphysics3d::CollisionBody* body;
+		CollisionCBack collisionCallback;
+	};
 
     class PhysicsWorld
     {
@@ -22,7 +35,10 @@ namespace Engine
             mAccumulator(0) { }
 
         reactphysics3d::RigidBody* CreateRigidBody(const reactphysics3d::Transform& transform,
-            UpdateRigidBodyCBack callback);
+            UpdateBodyCBack callback);
+
+		rp3d::CollisionBody* PhysicsWorld::CreateCollisionBody(const rp3d::Transform& transform,
+			UpdateBodyCBack cbCallback);
 
         void SetGravity(reactphysics3d::Vector3 g) { mDynamics.setGravity(g); }
 
@@ -35,14 +51,22 @@ namespace Engine
         MEM_POOL_DECLARE_SIZE(PhysicsWorld, 8192);
 
         reactphysics3d::DynamicsWorld mDynamics;
+        reactphysics3d::CollisionWorld mCollision;
         float mAccumulator;
 
-        struct State
+        struct RbState
         {
             reactphysics3d::RigidBody* rb;
-            UpdateRigidBodyCBack updateBody;
+            UpdateBodyCBack updateRigidBody;
         };
-        std::forward_list<State> mState;
+        std::forward_list<RbState> mRbState;
+
+		struct CbState
+		{
+			CollisionBody cb;
+			UpdateBodyCBack updateCollisionBody;
+		};
+		std::forward_list<CbState> mCbState;
 
         void Update();
     };

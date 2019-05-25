@@ -125,7 +125,7 @@ namespace Engine
 		{
 			// fixed widget pixel width
 			nk_layout_row_static(&mUIContext, 30, 80, 1);
-			if (nk_button_label(&mUIContext, "button"))
+			if (nk_button_label(&mUIContext, "Button"))
 			{
 				// event handling
 			}

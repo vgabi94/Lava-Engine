@@ -24,15 +24,23 @@ namespace Engine
     }
 
     rp3d::RigidBody * PhysicsWorld::CreateRigidBody(const rp3d::Transform & transform,
-        UpdateRigidBodyCBack callback)
+        UpdateBodyCBack rbCallback)
     {
         auto rb = mDynamics.createRigidBody(transform);
 		rb->setAngularDamping(0.05f);
 		rb->setLinearDamping(0.0f);
-        // Watch out for deletion from managed code!
-        mState.push_front(State{ rb, callback });
+
+        mRbState.push_front(RbState{ rb, rbCallback });
         return rb;
     }
+
+	rp3d::CollisionBody* PhysicsWorld::CreateCollisionBody(const rp3d::Transform& transform,
+		UpdateBodyCBack cbCallback)
+	{
+		auto cb = mCollision.createCollisionBody(transform);
+		mCbState.push_front(CbState{ CollisionBody{ cb, nullptr }, cbCallback });
+		return cb;
+	}
 
     void PhysicsWorld::Update()
     {   
@@ -67,10 +75,10 @@ namespace Engine
             // Set this to 0 because we simulated all of the deltaTime
             //mAccumulator = 0;
 
-            for (auto state : mState)
+            for (auto state : mRbState)
             {
                 auto trans = state.rb->getTransform();
-                state.updateBody(trans.getPosition(), trans.getOrientation());
+                state.updateRigidBody(trans.getPosition(), trans.getOrientation());
             }
         }
     }
@@ -79,72 +87,82 @@ namespace Engine
 /* EXPORTED INTERFACE */
 extern "C"
 {
-    LAVA_API void SetPhysicsCallback_Native(Engine::PhysicsWorld* pworld,
-        Engine::UpdateCback callback)
-    {
-        pworld->PhysicsUpdateCallback = callback;
-    }
+	LAVA_API void SetPhysicsCallback_Native(Engine::PhysicsWorld* pworld,
+		Engine::UpdateCback callback)
+	{
+		pworld->PhysicsUpdateCallback = callback;
+	}
 
-    LAVA_API void SetGravity_Native(Engine::PhysicsWorld* pworld, rp3d::Vector3 gravity)
-    {
-        pworld->SetGravity(gravity);
-    }
+	LAVA_API void SetGravity_Native(Engine::PhysicsWorld* pworld, rp3d::Vector3 gravity)
+	{
+		pworld->SetGravity(gravity);
+	}
 
-    // -------- RigidBody -------- //
-    LAVA_API rp3d::RigidBody* CreateRigidBody_Native(Engine::PhysicsWorld* pworld,
-        rp3d::Vector3 pos,
-        rp3d::Quaternion quat,
-        Engine::UpdateRigidBodyCBack callback)
-    {
-        rp3d::Transform trans(pos, quat);
-        return pworld->CreateRigidBody(trans, callback);
-    }
+	// -------- CollisionBody -------- //
+	LAVA_API rp3d::CollisionBody* CreateCollisionBody_Native(Engine::PhysicsWorld* pworld,
+		rp3d::Vector3 pos,
+		rp3d::Quaternion quat,
+		Engine::UpdateBodyCBack callback)
+	{
+		rp3d::Transform trans(pos, quat);
+		return pworld->CreateCollisionBody(trans, callback);
+	}
 
-    LAVA_API void SetType_Native(rp3d::RigidBody* rb, rp3d::BodyType type)
-    {
-        rb->setType(type);
-    }
+	// -------- RigidBody -------- //
+	LAVA_API rp3d::RigidBody* CreateRigidBody_Native(Engine::PhysicsWorld* pworld,
+		rp3d::Vector3 pos,
+		rp3d::Quaternion quat,
+		Engine::UpdateBodyCBack callback)
+	{
+		rp3d::Transform trans(pos, quat);
+		return pworld->CreateRigidBody(trans, callback);
+	}
 
-    LAVA_API void SetPhysicsMaterial_Native(rp3d::RigidBody* rb, rp3d::Material material)
-    {
-        rb->setMaterial(material);
-    }
+	LAVA_API void SetType_Native(rp3d::RigidBody* rb, rp3d::BodyType type)
+	{
+		rb->setType(type);
+	}
 
-    LAVA_API void SetMass_Native(rp3d::RigidBody* rb, float mass)
-    {
-        rb->setMass(mass);
-    }
+	LAVA_API void SetPhysicsMaterial_Native(rp3d::RigidBody* rb, rp3d::Material material)
+	{
+		rb->setMaterial(material);
+	}
 
-    LAVA_API float GetMass_Native(rp3d::RigidBody* rb)
-    {
-        return rb->getMass();
-    }
+	LAVA_API void SetMass_Native(rp3d::RigidBody* rb, float mass)
+	{
+		rb->setMass(mass);
+	}
 
-    LAVA_API void EnableGravity_Native(rp3d::RigidBody* rb, bool flag)
-    {
-        rb->enableGravity(flag);
-    }
+	LAVA_API float GetMass_Native(rp3d::RigidBody* rb)
+	{
+		return rb->getMass();
+	}
 
-    LAVA_API void SetTransform_Native(rp3d::RigidBody* rb, rp3d::Vector3 pos, rp3d::Quaternion rot)
-    {
-        rp3d::Transform trans(pos, rot);
-        rb->setTransform(trans);
-    }
+	LAVA_API void EnableGravity_Native(rp3d::RigidBody* rb, bool flag)
+	{
+		rb->enableGravity(flag);
+	}
 
-    LAVA_API void ApplyForce_Native(rp3d::RigidBody* rb, rp3d::Vector3 force, rp3d::Vector3 point)
-    {
-        rb->applyForce(force, point);
-    }
+	LAVA_API void SetTransform_Native(rp3d::RigidBody* rb, rp3d::Vector3 pos, rp3d::Quaternion rot)
+	{
+		rp3d::Transform trans(pos, rot);
+		rb->setTransform(trans);
+	}
 
-    LAVA_API void ApplyForceToCenterOfMass_Native(rp3d::RigidBody* rb, rp3d::Vector3 force)
-    {
-        rb->applyForceToCenterOfMass(force);
-    }
+	LAVA_API void ApplyForce_Native(rp3d::RigidBody* rb, rp3d::Vector3 force, rp3d::Vector3 point)
+	{
+		rb->applyForce(force, point);
+	}
 
-    LAVA_API void ApplyTorque_Native(rp3d::RigidBody* rb, rp3d::Vector3 torque)
-    {
-        rb->applyTorque(torque);
-    }
+	LAVA_API void ApplyForceToCenterOfMass_Native(rp3d::RigidBody* rb, rp3d::Vector3 force)
+	{
+		rb->applyForceToCenterOfMass(force);
+	}
+
+	LAVA_API void ApplyTorque_Native(rp3d::RigidBody* rb, rp3d::Vector3 torque)
+	{
+		rb->applyTorque(torque);
+	}
 
 	LAVA_API void SetLinearDamping_Native(rp3d::RigidBody* rb, float damping)
 	{
@@ -156,23 +174,38 @@ extern "C"
 		rb->setAngularDamping(damping);
 	}
 
-    // -------- Collision Shapes -------- //
-    LAVA_API void SetShapeTransform_Native(rp3d::ProxyShape* proxy, rp3d::Vector3 pos, rp3d::Quaternion rot)
-    {
-        rp3d::Transform trans(pos, rot);
-        proxy->setLocalToBodyTransform(trans);
-    }
+	// -------- Collision Shapes -------- //
+	LAVA_API void SetShapeTransform_Native(rp3d::ProxyShape* proxy, rp3d::Vector3 pos, rp3d::Quaternion rot)
+	{
+		rp3d::Transform trans(pos, rot);
+		proxy->setLocalToBodyTransform(trans);
+	}
 
-    // -------- Box Shape -------- //
-    LAVA_API rp3d::ProxyShape* CreateBoxShape_Native(rp3d::RigidBody* rb, rp3d::Vector3 halfExtents,
-        rp3d::Vector3 pos, rp3d::Quaternion rot, float mass)
-    {
-        rp3d::Transform trans(pos, rot);
-        rp3d::BoxShape* shape = Engine::PhysicsWorld::mBoxAllocator.newElement(halfExtents);
-        auto proxy = rb->addCollisionShape(shape, trans, mass);
-        proxy->setUserData(shape);
-        return proxy;
-    }
+	// -------- Box Shape -------- //
+	LAVA_API rp3d::ProxyShape* CreateBoxShape_Native(rp3d::RigidBody* rb, rp3d::Vector3 halfExtents,
+		rp3d::Vector3 pos, rp3d::Quaternion rot, float mass)
+	{
+		rp3d::Transform trans(pos, rot);
+		rp3d::BoxShape* shape = Engine::PhysicsWorld::mBoxAllocator.newElement(halfExtents);
+		auto proxy = rb->addCollisionShape(shape, trans, mass);
+		proxy->setUserData(shape);
+		return proxy;
+	}
+
+	LAVA_API rp3d::ProxyShape* CreateBoxTrigger_Native(rp3d::CollisionBody* cb, rp3d::Vector3 halfExtents,
+		rp3d::Vector3 pos, rp3d::Quaternion rot)
+	{
+		rp3d::Transform trans(pos, rot);
+		rp3d::BoxShape* shape = Engine::PhysicsWorld::mBoxAllocator.newElement(halfExtents);
+		auto proxy = cb->addCollisionShape(shape, trans);
+		proxy->setUserData(shape);
+		return proxy;
+	}
+
+	LAVA_API void SetBoxTriggerCallback_Native(rp3d::ProxyShape* proxy, Engine::CollisionCBack cback)
+	{
+		// TODO
+	}
 
     LAVA_API void DestroyBoxShape_Native(rp3d::RigidBody* rb, rp3d::ProxyShape* proxy)
     {
@@ -181,6 +214,14 @@ extern "C"
         );
         rb->removeCollisionShape(proxy);
     }
+
+	LAVA_API void DestroyBoxTrigger_Native(rp3d::CollisionBody* cb, rp3d::ProxyShape* proxy)
+	{
+		Engine::PhysicsWorld::mBoxAllocator.deleteElement(
+			static_cast<rp3d::BoxShape*>(proxy->getUserData())
+		);
+		cb->removeCollisionShape(proxy);
+	}
 
     // -------- Sphere Shape -------- //
     LAVA_API rp3d::ProxyShape* CreateSphereShape_Native(rp3d::RigidBody* rb, float radius,
