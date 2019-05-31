@@ -16,11 +16,11 @@ namespace Engine
 	typedef void(*UpdateBodyCBack)(reactphysics3d::Vector3, reactphysics3d::Quaternion);
 	typedef void(*CollisionCBack)(CollisionInfoMarshal&);
 
-	struct CollisionBody
+	/*struct CollisionBodyExt
 	{
 		reactphysics3d::CollisionBody* body;
 		CollisionCBack collisionCallback;
-	};
+	};*/
 
     class PhysicsWorld
     {
@@ -42,11 +42,17 @@ namespace Engine
 
         void SetGravity(reactphysics3d::Vector3 g) { mDynamics.setGravity(g); }
 
+		void SetProxyCallback(rp3d::ProxyShape* ps, CollisionCBack cb)
+		{
+			mProxyCallback[ps] = cb;
+		}
+
         UpdateCback PhysicsUpdateCallback;
 
         static MemoryPool<reactphysics3d::BoxShape> mBoxAllocator;
         static MemoryPool<reactphysics3d::SphereShape> mSphereAllocator;
         static MemoryPool<reactphysics3d::CapsuleShape> mCapsuleAllocator;
+        //static MemoryPool<CollisionBodyExt> mCBAllocator;
     private:
         MEM_POOL_DECLARE_SIZE(PhysicsWorld, 8192);
 
@@ -59,14 +65,16 @@ namespace Engine
             reactphysics3d::RigidBody* rb;
             UpdateBodyCBack updateRigidBody;
         };
-        std::forward_list<RbState> mRbState;
+        std::vector<RbState> mRbState;
 
 		struct CbState
 		{
-			CollisionBody cb;
+			rp3d::CollisionBody* cb;
 			UpdateBodyCBack updateCollisionBody;
 		};
-		std::forward_list<CbState> mCbState;
+		std::vector<CbState> mCbState;
+
+		std::unordered_map<rp3d::ProxyShape*, CollisionCBack> mProxyCallback;
 
         void Update();
     };

@@ -149,6 +149,13 @@ namespace Demo
                 var bdy = phys.CreateRigidBody(visual.Transform.Position);
                 bdy.AddCollisionShape(new BoxShape(1.1f));
                 visual.AddComponent(bdy);
+
+                var cb = phys.CreateCollisionBody(visual.Transform.Position);
+                var trigShape = new BoxShape(1.1f, true);
+                trigShape.CollisionEvent += TrigShape_CollisionEvent;
+                cb.AddCollisionShape(trigShape);
+                visual.AddComponent(cb);
+
                 world.AddEntity(visual);
             }
 
@@ -170,6 +177,12 @@ namespace Demo
             world.AddEntity(iblEnt);
 
             EventManager.UpdateEvent += Update;
+        }
+
+        private static void TrigShape_CollisionEvent(CollisionInfo collisionInfo)
+        {
+            RigidBody rb = collisionInfo.owner.Owner.GetComponent<RigidBody>();
+            rb.ApplyForceToCenterOfMass(Vector3.UnitY * 10);
         }
 
         static void Main(string[] args)

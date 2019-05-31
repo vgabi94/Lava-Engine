@@ -10,10 +10,12 @@ namespace Engine
     MemoryPool<reactphysics3d::BoxShape> PhysicsWorld::mBoxAllocator;
     MemoryPool<reactphysics3d::SphereShape> PhysicsWorld::mSphereAllocator;
     MemoryPool<reactphysics3d::CapsuleShape> PhysicsWorld::mCapsuleAllocator;
+	//MemoryPool<CollisionBodyExt> PhysicsWorld::mCBAllocator;
 
     void PhysicsWorld::Init()
     {
         LOG_INFO("[LOG] Create physics world {0:#x}\n", (uint64_t)this);
+		mProxyCallback.reserve(2);
         //mState.reserve(NUM_BODIES);
     }
 
@@ -30,7 +32,7 @@ namespace Engine
 		rb->setAngularDamping(0.05f);
 		rb->setLinearDamping(0.0f);
 
-        mRbState.push_front(RbState{ rb, rbCallback });
+        mRbState.push_back(RbState{ rb, rbCallback });
         return rb;
     }
 
@@ -38,7 +40,7 @@ namespace Engine
 		UpdateBodyCBack cbCallback)
 	{
 		auto cb = mCollision.createCollisionBody(transform);
-		mCbState.push_front(CbState{ CollisionBody{ cb, nullptr }, cbCallback });
+		mCbState.push_back(CbState{ cb, cbCallback });
 		return cb;
 	}
 
@@ -75,12 +77,34 @@ namespace Engine
             // Set this to 0 because we simulated all of the deltaTime
             //mAccumulator = 0;
 
-            for (auto state : mRbState)
+			for (size_t i = 0; i < mRbState.size(); i++)
             {
+				auto& state = mRbState[i];
                 auto trans = state.rb->getTransform();
                 state.updateRigidBody(trans.getPosition(), trans.getOrientation());
+				mCbState[i].updateCollisionBody(trans.getPosition(), trans.getOrientation());
             }
         }
+
+		for (size_t i = 0; i < mCbState.size() - 1; i++)
+		{
+			auto& state1 = mCbState[i];
+			for (size_t j = i + 1; j < mCbState.size(); j++)
+			{
+				auto& state2 = mCbState[j];
+				if (mCollision.testOverlap(state1.cb, state2.cb))
+				{
+					CollisionInfoMarshal cim;
+					cim.pointOfContact = Vector3(0, 0, 0); // Dummy value because it's unused
+
+					const auto& pl1 = state1.cb->getProxyShapesList();
+					const auto& pl2 = state2.cb->getProxyShapesList();
+					// Assume only one shape per collision body
+					mProxyCallback[pl1](cim);
+					mProxyCallback[pl2](cim);
+				}
+			}
+		}
     }
 }
 
@@ -149,6 +173,12 @@ extern "C"
 		rb->setTransform(trans);
 	}
 
+	LAVA_API void SetTransformCb_Native(rp3d::CollisionBody* cb, rp3d::Vector3 pos, rp3d::Quaternion rot)
+	{
+		rp3d::Transform trans(pos, rot);
+		cb->setTransform(trans);
+	}
+
 	LAVA_API void ApplyForce_Native(rp3d::RigidBody* rb, rp3d::Vector3 force, rp3d::Vector3 point)
 	{
 		rb->applyForce(force, point);
@@ -202,9 +232,9 @@ extern "C"
 		return proxy;
 	}
 
-	LAVA_API void SetBoxTriggerCallback_Native(rp3d::ProxyShape* proxy, Engine::CollisionCBack cback)
+	LAVA_API void SetBoxTriggerCallback_Native(Engine::PhysicsWorld* pworld, rp3d::ProxyShape* proxy, Engine::CollisionCBack cback)
 	{
-		// TODO
+		pworld->SetProxyCallback(proxy, cback);
 	}
 
     LAVA_API void DestroyBoxShape_Native(rp3d::RigidBody* rb, rp3d::ProxyShape* proxy)

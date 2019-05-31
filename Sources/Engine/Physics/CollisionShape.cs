@@ -6,13 +6,13 @@ namespace Lava.Physics
 {
     public struct CollisionInfoMarshal
     {
-        Vector3 pointOfContact;
+        public Vector3 pointOfContact;
     }
 
     public struct CollisionInfo
     {
-        Vector3 pointOfContact;
-        Lava.Engine.Component owner;
+        public Vector3 pointOfContact;
+        public Lava.Engine.Component owner;
     }
 
     public abstract class CollisionShape
@@ -21,6 +21,10 @@ namespace Lava.Physics
         private static extern void SetShapeTransform_Native(IntPtr proxy, Vector3 pos, Quaternion rot);
 
         public IntPtr NativePtr { get; internal set; }
+
+        public RigidBody RigidBody { get; protected set; }
+
+        public CollisionBody CollisionBody { get; protected set; }
 
         public Vector3 Position { get; set; }
         public Quaternion Rotation { get; set; }
@@ -36,7 +40,6 @@ namespace Lava.Physics
             if (trigger)
             {
                 onCollision = new CollisionCallback(OnCollision);
-                RegisterCollisionCallback();
                 IsTrigger = trigger;
             }
         }
@@ -83,9 +86,13 @@ namespace Lava.Physics
         [DllImport("LavaCore.dll")]
         private static extern IntPtr DestroyBoxTrigger_Native(IntPtr cb, IntPtr proxy);
 
+        [DllImport("LavaCore.dll")]
+        private static extern void SetBoxTriggerCallback_Native(IntPtr pworld, IntPtr proxy, CollisionCallback cback);
+
         public override void CreateProxy(RigidBody rb)
         {
             NativePtr = CreateBoxShape_Native(rb.NativePtr, HalfExtent, Position, Rotation, Mass);
+            RigidBody = rb;
         }
 
         public override void DestroyProxy(RigidBody rb)
@@ -96,6 +103,8 @@ namespace Lava.Physics
         public override void CreateProxyTrigger(CollisionBody cb)
         {
             CreateBoxTrigger_Native(cb.NativePtr, HalfExtent, Position, Rotation);
+            CollisionBody = cb;
+            RegisterCollisionCallback();
         }
 
         public override void DestroyProxyTrigger(CollisionBody cb)
@@ -105,7 +114,7 @@ namespace Lava.Physics
 
         protected override void RegisterCollisionCallback()
         {
-            throw new NotImplementedException();
+            SetBoxTriggerCallback_Native(RigidBody.PhysicsWorld.NativePtr, NativePtr, onCollision);
         }
 
         public Vector3 HalfExtent { get; private set; }

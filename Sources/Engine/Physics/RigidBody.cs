@@ -134,6 +134,8 @@ namespace Lava.Physics
         }
         private Mathematics.Quaternion rotation;
 
+        public PhysicsWorld PhysicsWorld { get; internal set; }
+
         internal RigidBody() : this(Mathematics.Vector3.Zero, Mathematics.Quaternion.Identity) { }
 
         internal RigidBody(Mathematics.Vector3 pos, Mathematics.Quaternion rot)

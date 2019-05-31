@@ -8,10 +8,7 @@ namespace Lava.Physics
     public sealed class CollisionBody : Component
     {
         [DllImport("LavaCore.dll")]
-        private static extern void SetType_Native(IntPtr rb, BodyType type);
-
-        [DllImport("LavaCore.dll")]
-        private static extern void SetTransform_Native(IntPtr rb, Mathematics.Vector3 pos, Mathematics.Quaternion rot);
+        private static extern void SetTransformCb_Native(IntPtr cb, Mathematics.Vector3 pos, Mathematics.Quaternion rot);
 
         public IntPtr NativePtr { get; internal set; }
 
@@ -20,16 +17,18 @@ namespace Lava.Physics
         public Mathematics.Vector3 Position
         {
             get { return position; }
-            set { position = value; SetTransform_Native(NativePtr, position, rotation); }
+            set { position = value; SetTransformCb_Native(NativePtr, position, rotation); }
         }
         private Mathematics.Vector3 position;
 
         public Mathematics.Quaternion Rotation
         {
             get { return rotation; }
-            set { rotation = value; SetTransform_Native(NativePtr, position, rotation); }
+            set { rotation = value; SetTransformCb_Native(NativePtr, position, rotation); }
         }
         private Mathematics.Quaternion rotation;
+
+        public PhysicsWorld PhysicsWorld { get; internal set; }
 
         internal CollisionBody() : this(Mathematics.Vector3.Zero, Mathematics.Quaternion.Identity) { }
 
@@ -37,22 +36,21 @@ namespace Lava.Physics
         {
             position = pos;
             rotation = rot;
-            visualTransform = null;
             shapes = new List<CollisionShape>();
         }
 
-        private Transform visualTransform;
+        internal void OnCollisionBodyUpdate(Mathematics.Vector3 pos, Mathematics.Quaternion rot)
+        {
+            position = pos;
+            rotation = rot;
+        }
 
         protected internal override void OnEntityAddOwner()
         {
-            visualTransform = Owner.GetComponent<Transform>();
-            if (visualTransform == null)
-                throw new Exception("Transform of VisualEntity not found!");
         }
 
         protected internal override void OnEntityRemoveOwner()
         {
-            visualTransform = null;
         }
 
         private List<CollisionShape> shapes;
