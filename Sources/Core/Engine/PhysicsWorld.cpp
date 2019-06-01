@@ -77,12 +77,10 @@ namespace Engine
             // Set this to 0 because we simulated all of the deltaTime
             //mAccumulator = 0;
 
-			for (size_t i = 0; i < mRbState.size(); i++)
+			for (auto& state : mRbState)
             {
-				auto& state = mRbState[i];
                 auto trans = state.rb->getTransform();
                 state.updateRigidBody(trans.getPosition(), trans.getOrientation());
-				mCbState[i].updateCollisionBody(trans.getPosition(), trans.getOrientation());
             }
         }
 
@@ -132,6 +130,12 @@ extern "C"
 		return pworld->CreateCollisionBody(trans, callback);
 	}
 
+	LAVA_API void SetTransformCb_Native(rp3d::CollisionBody* cb, rp3d::Vector3 pos, rp3d::Quaternion rot)
+	{
+		rp3d::Transform trans(pos, rot);
+		cb->setTransform(trans);
+	}
+
 	// -------- RigidBody -------- //
 	LAVA_API rp3d::RigidBody* CreateRigidBody_Native(Engine::PhysicsWorld* pworld,
 		rp3d::Vector3 pos,
@@ -171,12 +175,6 @@ extern "C"
 	{
 		rp3d::Transform trans(pos, rot);
 		rb->setTransform(trans);
-	}
-
-	LAVA_API void SetTransformCb_Native(rp3d::CollisionBody* cb, rp3d::Vector3 pos, rp3d::Quaternion rot)
-	{
-		rp3d::Transform trans(pos, rot);
-		cb->setTransform(trans);
 	}
 
 	LAVA_API void ApplyForce_Native(rp3d::RigidBody* rb, rp3d::Vector3 force, rp3d::Vector3 point)

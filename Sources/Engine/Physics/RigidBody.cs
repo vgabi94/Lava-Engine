@@ -159,6 +159,12 @@ namespace Lava.Physics
             rotation = rot;
             visualTransform.Position = pos;
             visualTransform.Rotation = rot;
+
+            var cb = Owner.GetComponent<CollisionBody>();
+            if (cb != null)
+            {
+                cb.SetTransform(pos, rot);
+            }
         }
 
         private Transform visualTransform;
@@ -207,6 +213,13 @@ namespace Lava.Physics
         public void ApplyTorque(Mathematics.Vector3 torque)
         {
             ApplyTorque_Native(NativePtr, torque);
+        }
+
+        public void SetTransform(Mathematics.Vector3 position, Mathematics.Quaternion rotation)
+        {
+            this.position = position;
+            this.rotation = rotation;
+            SetTransform_Native(NativePtr, position, rotation);
         }
     }
 }

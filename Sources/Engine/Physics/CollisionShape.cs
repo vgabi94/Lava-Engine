@@ -65,7 +65,8 @@ namespace Lava.Physics
         protected void OnCollision(ref CollisionInfoMarshal collInfo)
         {
             CollisionInfo info = new CollisionInfo();
-            // TODO fill info
+            info.pointOfContact = collInfo.pointOfContact;
+            info.owner = CollisionBody;
             CollisionEvent?.Invoke(info);
         }
     }
@@ -102,7 +103,7 @@ namespace Lava.Physics
 
         public override void CreateProxyTrigger(CollisionBody cb)
         {
-            CreateBoxTrigger_Native(cb.NativePtr, HalfExtent, Position, Rotation);
+            NativePtr = CreateBoxTrigger_Native(cb.NativePtr, HalfExtent, Position, Rotation);
             CollisionBody = cb;
             RegisterCollisionCallback();
         }
@@ -114,7 +115,7 @@ namespace Lava.Physics
 
         protected override void RegisterCollisionCallback()
         {
-            SetBoxTriggerCallback_Native(RigidBody.PhysicsWorld.NativePtr, NativePtr, onCollision);
+            SetBoxTriggerCallback_Native(CollisionBody.PhysicsWorld.NativePtr, NativePtr, onCollision);
         }
 
         public Vector3 HalfExtent { get; private set; }

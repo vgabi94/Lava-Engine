@@ -151,7 +151,7 @@ namespace Demo
                 visual.AddComponent(bdy);
 
                 var cb = phys.CreateCollisionBody(visual.Transform.Position);
-                var trigShape = new BoxShape(1.1f, true);
+                var trigShape = new BoxShape(1.5f, true);
                 trigShape.CollisionEvent += TrigShape_CollisionEvent;
                 cb.AddCollisionShape(trigShape);
                 visual.AddComponent(cb);
@@ -169,7 +169,6 @@ namespace Demo
             floorBody.AddCollisionShape(new BoxShape(50f, 0.1f, 50f));
             floorBody.Type = BodyType.Static;
             floorVisual.AddComponent(floorBody);
-
             world.AddEntity(floorVisual);
 
             Entity iblEnt = Entity.NewWithComponent(out IBLProbe iblProbe);
@@ -182,7 +181,7 @@ namespace Demo
         private static void TrigShape_CollisionEvent(CollisionInfo collisionInfo)
         {
             RigidBody rb = collisionInfo.owner.Owner.GetComponent<RigidBody>();
-            rb.ApplyForceToCenterOfMass(Vector3.UnitY * 10);
+            rb.ApplyForceToCenterOfMass(Vector3.UnitX * 10);
         }
 
         static void Main(string[] args)

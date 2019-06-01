@@ -28,6 +28,13 @@ namespace Lava.Physics
         }
         private Mathematics.Quaternion rotation;
 
+        public void SetTransform(Mathematics.Vector3 position, Mathematics.Quaternion rotation)
+        {
+            this.position = position;
+            this.rotation = rotation;
+            SetTransformCb_Native(NativePtr, position, rotation);
+        }
+
         public PhysicsWorld PhysicsWorld { get; internal set; }
 
         internal CollisionBody() : this(Mathematics.Vector3.Zero, Mathematics.Quaternion.Identity) { }
