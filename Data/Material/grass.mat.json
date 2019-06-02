@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "grass/basecolor.png",
+    "normalMap": "grass/normal.png",
+    "aoMap": "grass/ao.png",
+    "metallicMap": "white",
+    "roughnessMap": "grass/roughness.png"
+}

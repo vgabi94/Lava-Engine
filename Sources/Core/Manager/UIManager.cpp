@@ -13,6 +13,15 @@ namespace Engine
 {
 	UIManager g_UIManager;
 
+	struct DebugUIState
+	{
+		int btn1Pressed;
+		int opt1Value;
+		float slider1Value = 0.5f;
+	};
+
+	DebugUIState gDebugUIState;
+
 	void UIManager::Init()
 	{
 		uint32_t white = g_TextureManager.GetColorTexture("white");
@@ -117,31 +126,32 @@ namespace Engine
 	{
 		// TEST DEBUG
 		enum { EASY, HARD };
-		static int op = EASY;
-		static float value = 0.6f;
-		static int i = 20;
+		gDebugUIState.btn1Pressed = false;
+		//static int op = EASY;
+		//static float value = 0.6f;
+
 		if (nk_begin(&mUIContext, "Show", nk_rect(50, 50, 220, 220),
 			NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_CLOSABLE))
 		{
 			// fixed widget pixel width
 			nk_layout_row_static(&mUIContext, 30, 80, 1);
-			if (nk_button_label(&mUIContext, "Button"))
+			if (nk_button_label(&mUIContext, "Jump!"))
 			{
-				// event handling
+				gDebugUIState.btn1Pressed = true;
 			}
 
 			// fixed widget window ratio width
 			nk_layout_row_dynamic(&mUIContext, 30, 2);
-			if (nk_option_label(&mUIContext, "easy", op == EASY)) op = EASY;
-			if (nk_option_label(&mUIContext, "hard", op == HARD)) op = HARD;
+			if (nk_option_label(&mUIContext, "Weak jump", gDebugUIState.opt1Value == EASY)) gDebugUIState.opt1Value = EASY;
+			if (nk_option_label(&mUIContext, "Strong jump", gDebugUIState.opt1Value == HARD)) gDebugUIState.opt1Value = HARD;
 
 			// custom widget pixel width
 			nk_layout_row_begin(&mUIContext, NK_STATIC, 30, 2);
 			{
 				nk_layout_row_push(&mUIContext, 50);
-				nk_label(&mUIContext, "Volume:", NK_TEXT_LEFT);
+				nk_label(&mUIContext, "Exposure:", NK_TEXT_LEFT);
 				nk_layout_row_push(&mUIContext, 110);
-				nk_slider_float(&mUIContext, 0, &value, 1.0f, 0.1f);
+				nk_slider_float(&mUIContext, 0, &gDebugUIState.slider1Value, 1.0f, 0.1f);
 			}
 			nk_layout_row_end(&mUIContext);
 		}
@@ -209,3 +219,21 @@ namespace Engine
 	}
 }
 
+/* EXPORTED INTERFACE */
+extern "C"
+{
+	LAVA_API int GetButtonPressedUI_Native()
+	{
+		return Engine::gDebugUIState.btn1Pressed;
+	}
+
+	LAVA_API float GetSliderValueUI_Native()
+	{
+		return Engine::gDebugUIState.slider1Value;
+	}
+
+	LAVA_API int GetRadioOptionUI_Native()
+	{
+		return Engine::gDebugUIState.opt1Value;
+	}
+}

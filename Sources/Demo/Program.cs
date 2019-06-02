@@ -1,12 +1,28 @@
 ﻿using Lava.Engine;
 using Lava.Mathematics;
 using Lava.Physics;
+using System.Runtime.InteropServices;
 
 namespace Demo
 {
     static class Program
     {
+        [DllImport("LavaCore.dll")]
+        private static extern int GetButtonPressedUI_Native();
+
+        [DllImport("LavaCore.dll")]
+        private static extern float GetSliderValueUI_Native();
+
+        [DllImport("LavaCore.dll")]
+        private static extern int GetRadioOptionUI_Native();
+
         static bool fullscreen = false;
+
+        static World mWorld;
+        static Material[] mats;
+        static VisualEntity[] visuals;
+        static PhysicsWorld phys;
+        static Entity sun;
 
         static void Update()
         {
@@ -19,6 +35,42 @@ namespace Demo
             if (Input.GetKey(KeyCode.Escape))
             {
                 Application.Quit();
+            }
+
+            if (Input.GetKeyPressed(KeyCode.E))
+            {
+                StaticMesh m = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
+                int i = Random.Range(0, 4);
+                VisualEntity visual = new VisualEntity(m, mats[i]);
+                visual.Transform.Position = Camera.Main.Position + Camera.Main.Forward * 5f;
+
+                var bdy = phys.CreateRigidBody(visual.Transform.Position);
+                bdy.AddCollisionShape(new BoxShape(1.1f));
+                visual.AddComponent(bdy);
+
+                //var cb = phys.CreateCollisionBody(visual.Transform.Position);
+                //var trigShape = new BoxShape(1.5f, true);
+                //trigShape.CollisionEvent += TrigShape_CollisionEvent;
+                //cb.AddCollisionShape(trigShape);
+                //visual.AddComponent(cb);
+
+                mWorld.AddEntity(visual);
+
+                bdy.ApplyForceToCenterOfMass(Camera.Main.Forward * 5000f);
+            }
+
+            float intensity = GetSliderValueUI_Native();
+            mWorld.skySettings.exposure  = intensity * 32f;
+
+            if (GetButtonPressedUI_Native() == 1)
+            {
+                for (int i = 0; i < visuals.Length; i++)
+                {
+                    float power = 300f;
+                    if (GetRadioOptionUI_Native() == 1)
+                        power = 800f;
+                    visuals[i].GetComponent<RigidBody>().ApplyForceToCenterOfMass(Vector3.UnitY * power);
+                }
             }
         }
 
@@ -45,14 +97,23 @@ namespace Demo
 
             //uint[] i = new uint[3] { 0, 1, 2 };
 
+            mats = new Material[]
+            {
+                Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json"),
+                Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json"),
+                Material.FromJSON(Settings.MaterialDirPath + "\\granite.mat.json"),
+                Material.FromJSON(Settings.MaterialDirPath + "\\grass.mat.json"),
+                Material.FromJSON(Settings.MaterialDirPath + "\\redplastic.mat.json")
+            };
+
             //uint tex = Texture.Load2D(Settings.TextureDirPath + "\\texture.jpg");
             uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky2.hdr", true);
             uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv2.hdr");
 
             uint tex = Texture.FromColor(Color.FromHex("#7FFF00"));
             //uint floorColor = Texture.FromColor(Color.FromHex("#dddddd"));
-            StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
-            StaticMesh mesh2 = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
+            //StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
+            //StaticMesh mesh2 = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
             StaticMesh crate1 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
             StaticMesh crate2 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
             //StaticMesh mesh = new StaticMesh(v, v.Length, i, i.Length);
@@ -66,25 +127,22 @@ namespace Demo
             Material material4 = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
             Material material5 = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
 
-            VisualEntity bunny1 = new VisualEntity(mesh, material);
-            VisualEntity bunny2 = new VisualEntity(mesh2, material2);
+            //VisualEntity bunny1 = new VisualEntity(mesh, material);
+            //VisualEntity bunny2 = new VisualEntity(mesh2, material2);
             VisualEntity crate1Ent = new VisualEntity(crate1, material4);
             VisualEntity crate2Ent = new VisualEntity(crate2, material5);
 
-
-
-            Entity sun = Entity.NewWithComponent(out DirectionalLight sunLight);
-            //TODO find true position on sky
+            sun = Entity.NewWithComponent(out DirectionalLight sunLight);
             sunLight.Direction = new Vector3(1f, 0.8f, 0.5f);
 
             var catTrans = crate1Ent.GetComponent<Transform>();
             catTrans.Position += Vector3.UnitY * -10f + Vector3.UnitX * -5f;
             catTrans.Scale *= 1f;
 
-            var trans = bunny2.GetComponent<Transform>();
-            trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
-            trans.Scale *= 2f;
-            trans.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, Mathf.Radians(90));
+            //var trans = bunny2.GetComponent<Transform>();
+            //trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
+            //trans.Scale *= 2f;
+            //trans.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, Mathf.Radians(90));
 
             Entity camEnt = Entity.NewWithComponent(out PerspectiveCamera camera);
             camEnt.AddComponent<CameraController>();
@@ -92,15 +150,15 @@ namespace Demo
             camera.Position = new Vector3(0f, 0f, 20f);
             camera.FarPlane = 512f;
 
-            World world = WorldManager.CreateWorld();
-            world.skySettings.SetColor(Color.GRAY);
-            world.skySettings.gamma = 2.2f;
-            world.skySettings.exposure = 16f;
-            world.skySettings.ambient = 0.2f;
-            world.skySettings.hdrTex = skyTex;
-            world.skySettings.hdrEnv = skyEnv;
+            mWorld = WorldManager.CreateWorld();
+            mWorld.skySettings.SetColor(Color.GRAY);
+            mWorld.skySettings.gamma = 2.2f;
+            mWorld.skySettings.exposure = 16f;
+            mWorld.skySettings.ambient = 0.2f;
+            mWorld.skySettings.hdrTex = skyTex;
+            mWorld.skySettings.hdrEnv = skyEnv;
 
-            var phys = world.PhysicsWorld;
+            phys = mWorld.PhysicsWorld;
             //phys.Gravity = new Vector3(0f, -2f, 0f);
 
             var crateBody = phys.CreateRigidBody(crate1Ent.Transform.Position);
@@ -111,40 +169,43 @@ namespace Demo
             crate2Body.AddCollisionShape(new BoxShape(1.1f));
             crate2Ent.AddComponent(crate2Body);
 
-            var body = phys.CreateRigidBody();
-            body.AddCollisionShape(new SphereShape(2f));
-            bunny1.AddComponent(body);
+            //var body = phys.CreateRigidBody();
+            //body.AddCollisionShape(new SphereShape(2f));
+            //bunny1.AddComponent(body);
 
-            var body2 = phys.CreateRigidBody(bunny2.Transform.Position, bunny2.Transform.Rotation);
-            body2.AddCollisionShape(new BoxShape(2f));
-            body2.Type = BodyType.Static;
-            bunny2.AddComponent(body2);
+            //var body2 = phys.CreateRigidBody(bunny2.Transform.Position, bunny2.Transform.Rotation);
+            //body2.AddCollisionShape(new BoxShape(2f));
+            //body2.Type = BodyType.Static;
+            //bunny2.AddComponent(body2);
 
-            world.AddEntity(bunny1);
-            //world.AddEntity(bunny2);
-            world.AddEntity(camEnt);
-            //world.AddEntity(blocuri);
-            world.AddEntity(sun);
-            world.AddEntity(crate1Ent);
-            world.AddEntity(crate2Ent);
+            //mWorld.AddEntity(bunny1);
+            //mWorld.AddEntity(bunny2);
+            mWorld.AddEntity(camEnt);
+            //mWorld.AddEntity(blocuri);
+            mWorld.AddEntity(sun);
+            mWorld.AddEntity(crate1Ent);
+            mWorld.AddEntity(crate2Ent);
 
             // for now just keep the music in Models directory
             AudioClip clip = new AudioClip(Settings.ModelsDirPath + "\\ChillingMusic.wav");
             Entity music = new Entity();
             music.AddComponent(clip);
-            world.AddEntity(music);
+            mWorld.AddEntity(music);
             clip.Play();
             clip.Looped = true;
 
+            visuals = new VisualEntity[10];
             for (int i = 0; i < 10; i++)
             {
                 StaticMesh m = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
-                Material mat;
-                if (Random.Range01() > 0.5)
-                    mat = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
-                else
-                    mat = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
-                VisualEntity visual = new VisualEntity(m, mat);
+                //Material mat;
+                //if (Random.Range01() > 0.5)
+                //    mat = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
+                //else
+                //    mat = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
+
+                visuals[i] = new VisualEntity(m, mats[i % mats.Length]);
+                VisualEntity visual = visuals[i];
                 visual.Transform.Position = Random.UnitSphere * 10;
                 var bdy = phys.CreateRigidBody(visual.Transform.Position);
                 bdy.AddCollisionShape(new BoxShape(1.1f));
@@ -156,7 +217,7 @@ namespace Demo
                 cb.AddCollisionShape(trigShape);
                 visual.AddComponent(cb);
 
-                world.AddEntity(visual);
+                mWorld.AddEntity(visual);
             }
 
             StaticMesh floor = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
@@ -169,19 +230,18 @@ namespace Demo
             floorBody.AddCollisionShape(new BoxShape(50f, 0.1f, 50f));
             floorBody.Type = BodyType.Static;
             floorVisual.AddComponent(floorBody);
-            world.AddEntity(floorVisual);
+            mWorld.AddEntity(floorVisual);
 
             Entity iblEnt = Entity.NewWithComponent(out IBLProbe iblProbe);
             iblProbe.Position = Vector3.Zero;
-            world.AddEntity(iblEnt);
+            mWorld.AddEntity(iblEnt);
 
             EventManager.UpdateEvent += Update;
         }
 
         private static void TrigShape_CollisionEvent(CollisionInfo collisionInfo)
         {
-            RigidBody rb = collisionInfo.owner.Owner.GetComponent<RigidBody>();
-            rb.ApplyForceToCenterOfMass(Vector3.UnitX * 10);
+            
         }
 
         static void Main(string[] args)

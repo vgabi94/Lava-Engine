@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "granite/basecolor.png",
+    "normalMap": "granite/normal.png",
+    "aoMap": "granite/ao.png",
+    "metallicMap": "granite/metallic.png",
+    "roughnessMap": "granite/roughness.png"
+}

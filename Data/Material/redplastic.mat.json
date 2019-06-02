@@ -1,0 +1,8 @@
+{
+    "type": "pbr",
+    "albedoMap": "redplastic/basecolor.png",
+    "normalMap": "redplastic/normal.png",
+    "aoMap": "redplastic/ao.png",
+    "metallicMap": "redplastic/metallic.png",
+    "roughnessMap": "redplastic/roughness.png"
+}
