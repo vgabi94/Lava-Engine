@@ -194,8 +194,8 @@ namespace Demo
             clip.Play();
             clip.Looped = true;
 
-            visuals = new VisualEntity[10];
-            for (int i = 0; i < 10; i++)
+            visuals = new VisualEntity[100];
+            for (int i = 0; i < visuals.Length; i++)
             {
                 StaticMesh m = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
                 //Material mat;
@@ -206,7 +206,7 @@ namespace Demo
 
                 visuals[i] = new VisualEntity(m, mats[i % mats.Length]);
                 VisualEntity visual = visuals[i];
-                visual.Transform.Position = Random.UnitSphere * 10;
+                visual.Transform.Position = Random.UnitSphere * 30;
                 var bdy = phys.CreateRigidBody(visual.Transform.Position);
                 bdy.AddCollisionShape(new BoxShape(1.1f));
                 visual.AddComponent(bdy);
@@ -241,12 +241,13 @@ namespace Demo
 
         private static void TrigShape_CollisionEvent(CollisionInfo collisionInfo)
         {
-            
+            var rb = collisionInfo.owner.Owner.GetComponent<RigidBody>();
+            rb.ApplyForceToCenterOfMass(Vector3.UnitY * 35f);
         }
 
         static void Main(string[] args)
         {
-            WindowParams p = new WindowParams(false, "Demo") { Resizable = true };
+            WindowParams p = new WindowParams(false, "Demo") { Resizable = false, Width = 1920, Height = 1080};
             Application.Init(p);
 
             InitializeGame();

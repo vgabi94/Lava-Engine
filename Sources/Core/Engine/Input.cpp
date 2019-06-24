@@ -30,6 +30,8 @@ namespace Engine
     /// </summary>
     static void KeyCallback(GLFWwindow * window, int key, int scancode, int action, int mods)
     {
+		if (key == -1) return;
+
         if (action == GLFW_PRESS)
         {
             ADD_STATE(g_Input.keyState[key], ((uint8_t)State::PRESSED | (uint8_t)State::HOLD));
@@ -49,6 +51,8 @@ namespace Engine
     /// </summary>
     static void MouseButtonCallback(GLFWwindow * window, int button, int action, int mods)
     {
+		if (button == -1) return;
+
         if (action == GLFW_PRESS)
         {
             ADD_STATE(g_Input.mouseState[button], ((uint8_t)State::PRESSED | (uint8_t)State::HOLD));
