@@ -23,6 +23,7 @@ namespace Demo
         static VisualEntity[] visuals;
         static PhysicsWorld phys;
         static Entity sun;
+        static AudioClip shotSound;
 
         static void Update()
         {
@@ -48,15 +49,11 @@ namespace Demo
                 bdy.AddCollisionShape(new BoxShape(1.1f));
                 visual.AddComponent(bdy);
 
-                //var cb = phys.CreateCollisionBody(visual.Transform.Position);
-                //var trigShape = new BoxShape(1.5f, true);
-                //trigShape.CollisionEvent += TrigShape_CollisionEvent;
-                //cb.AddCollisionShape(trigShape);
-                //visual.AddComponent(cb);
-
                 mWorld.AddEntity(visual);
 
                 bdy.ApplyForceToCenterOfMass(Camera.Main.Forward * 5000f);
+
+                shotSound.Play();
             }
 
             float intensity = GetSliderValueUI_Native();
@@ -76,27 +73,6 @@ namespace Demo
 
         static void InitializeGame()
         {
-            //Vertex[] v = new Vertex[3]
-            //{
-            //    new Vertex{
-            //        position = new Vector3(0.0f, -0.5f, 0.0f),
-            //        normal = Vector3.UnitZ,
-            //        texcoord = new Vector2(1.0f, 0.0f)
-            //    },
-            //    new Vertex{
-            //        position = new Vector3(0.5f, 0.5f, 0.0f),
-            //        normal = Vector3.UnitZ,
-            //        texcoord = new Vector2(0.0f, 1.0f)
-            //    },
-            //    new Vertex{
-            //        position = new Vector3(-0.5f, 0.5f, 0.0f),
-            //        normal = Vector3.UnitZ,
-            //        texcoord = new Vector2(0.0f, 0.0f)
-            //    }
-            //};
-
-            //uint[] i = new uint[3] { 0, 1, 2 };
-
             mats = new Material[]
             {
                 Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json"),
@@ -106,17 +82,12 @@ namespace Demo
                 Material.FromJSON(Settings.MaterialDirPath + "\\redplastic.mat.json")
             };
 
-            //uint tex = Texture.Load2D(Settings.TextureDirPath + "\\texture.jpg");
             uint skyTex = Texture.LoadHDR(Settings.TextureDirPath + "\\sky2.hdr", true);
             uint skyEnv = Texture.LoadHDR(Settings.TextureDirPath + "\\skyenv2.hdr");
 
             uint tex = Texture.FromColor(Color.FromHex("#7FFF00"));
-            //uint floorColor = Texture.FromColor(Color.FromHex("#dddddd"));
-            //StaticMesh mesh = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
-            //StaticMesh mesh2 = new StaticMesh(Settings.ModelsDirPath + "\\bunny.obj");
             StaticMesh crate1 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
             StaticMesh crate2 = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
-            //StaticMesh mesh = new StaticMesh(v, v.Length, i, i.Length);
 
             Material material = new Material("phong");
             material.SetUniform(0, tex);
@@ -127,8 +98,6 @@ namespace Demo
             Material material4 = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
             Material material5 = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
 
-            //VisualEntity bunny1 = new VisualEntity(mesh, material);
-            //VisualEntity bunny2 = new VisualEntity(mesh2, material2);
             VisualEntity crate1Ent = new VisualEntity(crate1, material4);
             VisualEntity crate2Ent = new VisualEntity(crate2, material5);
 
@@ -138,11 +107,6 @@ namespace Demo
             var catTrans = crate1Ent.GetComponent<Transform>();
             catTrans.Position += Vector3.UnitY * -10f + Vector3.UnitX * -5f;
             catTrans.Scale *= 1f;
-
-            //var trans = bunny2.GetComponent<Transform>();
-            //trans.Position += Vector3.UnitY * -20f + Vector3.UnitX * -3f;
-            //trans.Scale *= 2f;
-            //trans.Rotation *= Quaternion.CreateFromAxisAngle(Vector3.UnitY, Mathf.Radians(90));
 
             Entity camEnt = Entity.NewWithComponent(out PerspectiveCamera camera);
             camEnt.AddComponent<CameraController>();
@@ -169,19 +133,7 @@ namespace Demo
             crate2Body.AddCollisionShape(new BoxShape(1.1f));
             crate2Ent.AddComponent(crate2Body);
 
-            //var body = phys.CreateRigidBody();
-            //body.AddCollisionShape(new SphereShape(2f));
-            //bunny1.AddComponent(body);
-
-            //var body2 = phys.CreateRigidBody(bunny2.Transform.Position, bunny2.Transform.Rotation);
-            //body2.AddCollisionShape(new BoxShape(2f));
-            //body2.Type = BodyType.Static;
-            //bunny2.AddComponent(body2);
-
-            //mWorld.AddEntity(bunny1);
-            //mWorld.AddEntity(bunny2);
             mWorld.AddEntity(camEnt);
-            //mWorld.AddEntity(blocuri);
             mWorld.AddEntity(sun);
             mWorld.AddEntity(crate1Ent);
             mWorld.AddEntity(crate2Ent);
@@ -194,25 +146,21 @@ namespace Demo
             clip.Play();
             clip.Looped = true;
 
-            visuals = new VisualEntity[100];
+            shotSound = new AudioClip(Settings.ModelsDirPath + "\\shot.wav");
+
+            visuals = new VisualEntity[50];
             for (int i = 0; i < visuals.Length; i++)
             {
                 StaticMesh m = new StaticMesh(Settings.ModelsDirPath + "\\Crate1.obj");
-                //Material mat;
-                //if (Random.Range01() > 0.5)
-                //    mat = Material.FromJSON(Settings.MaterialDirPath + "\\rustediron.mat.json");
-                //else
-                //    mat = Material.FromJSON(Settings.MaterialDirPath + "\\iron.mat.json");
-
                 visuals[i] = new VisualEntity(m, mats[i % mats.Length]);
                 VisualEntity visual = visuals[i];
-                visual.Transform.Position = Random.UnitSphere * 30;
+                visual.Transform.Position = Random.UnitSphere * 20;
                 var bdy = phys.CreateRigidBody(visual.Transform.Position);
                 bdy.AddCollisionShape(new BoxShape(1.1f));
                 visual.AddComponent(bdy);
 
                 var cb = phys.CreateCollisionBody(visual.Transform.Position);
-                var trigShape = new BoxShape(1.5f, true);
+                var trigShape = new BoxShape(1.6f, true);
                 trigShape.CollisionEvent += TrigShape_CollisionEvent;
                 cb.AddCollisionShape(trigShape);
                 visual.AddComponent(cb);
