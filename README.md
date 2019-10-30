@@ -14,4 +14,4 @@ A game engine with Vulkan rendering.
 4. Run **MakeLinks.bat**. Now you can run the project from within Visual Studio!
 5. You'll find the binaries in **debug/engine** or **release/engine** depending on which target you chose to build.
 
-*The demo was tested on NVIDIA cards only. I don't know what will happen on AMD cards!*
+*The demo was tested on NVIDIA cards only.*
